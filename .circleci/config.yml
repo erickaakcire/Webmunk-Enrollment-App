@@ -36,7 +36,7 @@ jobs:
             cd django
             django-admin.py startproject django_site
             mv ../enrollment django_site
-            cd site
+            cd django_site
             cp enrollment/circle_settings.py django_site/settings.py
             cp enrollment/circle_urls.py django_site/urls.py
             python manage.py migrate
