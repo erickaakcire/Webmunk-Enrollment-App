@@ -34,18 +34,18 @@ jobs:
             mv project enrollment
             mkdir django
             cd django
-            django-admin.py startproject site
-            mv ../enrollment site
+            django-admin.py startproject django_site
+            mv ../enrollment django_site
             cd site
-            cp enrollment/circle_settings.py site/settings.py
-            cp enrollment/circle_urls.py site/urls.py
+            cp enrollment/circle_settings.py django_site/settings.py
+            cp enrollment/circle_urls.py django_site/urls.py
             python manage.py migrate
             python manage.py test
             cp enrollment/.pylintrc .
             pylint enrollment
             bandit -r .
       - save_cache:
-          key: venv-{{ .Branch }}-{{ checksum "/home/circleci/django/site/enrollment/requirements.txt" }}
+          key: venv-{{ .Branch }}-{{ checksum "/home/circleci/django/django_site/enrollment/requirements.txt" }}
           paths:
             - "/home/circleci/venv"
       - store_test_results:
