@@ -42,7 +42,7 @@ jobs:
             python manage.py migrate
             python manage.py test
             cp enrollment/.pylintrc .
-            pylint django_dialog_engine
+            pylint enrollment
             bandit -r .
       - save_cache:
           key: venv-{{ .Branch }}-{{ checksum "/home/circleci/django/site/enrollment/requirements.txt" }}
