@@ -1,5 +1,6 @@
+# pylint: disable=line-too-long, no-member
+
 import json
-import datetime
 
 from django.http import HttpResponse
 from django.utils import timezone
@@ -39,18 +40,18 @@ def enroll(request):
             'additional-css': [],
             'actions': {},
         }
-        
+
         if found_enrollment.rule_set is None:
-        	default_rules = ExtensionRuleSet.objects.filter(is_default=True).first()
-        	
-        	if default_rules is not None:
-	        	found_enrollment.rule_set = default_rules
-	        	found_enrollment.save()
+            default_rules = ExtensionRuleSet.objects.filter(is_default=True).first()
+
+            if default_rules is not None:
+                found_enrollment.rule_set = default_rules
+                found_enrollment.save()
 
         if found_enrollment.rule_set is not None and found_enrollment.rule_set.is_active:
             payload['rules'] = found_enrollment.rule_set.rules()
         else:
-	        payload['error'] = 'Participant not configured with ruleset and no default ruleset selected.'
+            payload['error'] = 'Participant not configured with ruleset and no default ruleset selected.'
     else:
         payload['error'] = 'Unable to retrieve original raw identifier from the request. Please fix and try again.'
 

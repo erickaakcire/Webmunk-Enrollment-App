@@ -1,0 +1,56 @@
+version: 2.1
+
+orbs:
+  python: circleci/python@1.2
+
+workflows:
+  build:
+    jobs:
+      - build
+
+jobs:
+  build:
+    docker:
+      - image: cimg/python:3.8
+      - image: circleci/postgres:9.6.9-postgis
+        auth:
+          username: mydockerhub-user
+          password: $DOCKERHUB_PASSWORD  # context / project UI env-var reference
+        environment:
+          POSTGRES_USER: root
+          POSTGRES_DB: circle_test
+          POSTGRES_PASSWORD: ""
+    steps:
+      - node/install
+      - checkout
+      - restore_cache:
+          key: venv-{{ .Branch }}-{{ checksum "requirements.txt" }}-v1
+      - run:
+          name: Build and validate
+          command: |
+            python -m venv --copies /home/circleci/venv
+            . /home/circleci/venv/bin/activate
+            pip install -r requirements.txt --progress-bar off
+            cd ..
+            mv project enrollment
+            mkdir django
+            cd django
+            django-admin.py startproject site
+            mv ../enrollment site
+            cd site
+            cp enrollment/circle_settings.py site/settings.py
+            cp enrollment/circle_urls.py site/urls.py
+            python manage.py migrate
+            python manage.py test
+            cp enrollment/.pylintrc .
+            pylint django_dialog_engine
+            bandit -r .
+      - save_cache:
+          key: venv-{{ .Branch }}-{{ checksum "/home/circleci/django/site/enrollment/requirements.txt" }}
+          paths:
+            - "/home/circleci/venv"
+      - store_test_results:
+          path: test-results/
+      - store_artifacts:
+          path: test-reports/
+          destination: python_app

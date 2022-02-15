@@ -1,3 +1,5 @@
+# pylint: disable=line-too-long, no-member
+
 import base64
 import json
 import random
@@ -7,7 +9,6 @@ from six import python_2_unicode_compatible
 
 from django.conf import settings
 from django.contrib.gis.db import models
-from django.db import models
 from django.utils.encoding import smart_str
 
 def decrypt_value(stored_text):
@@ -65,12 +66,12 @@ class ExtensionRuleSet(models.Model):
     name = models.CharField(max_length=1024)
     is_active = models.BooleanField(default=True)
     is_default = models.BooleanField(default=False)
-    
+
     rule_json = models.TextField(max_length=(16 * 1024 * 1024), default='[]')
 
     def __str__(self):
         return str(self.name)
-        
+
     def rules(self):
         return json.loads(self.rule_json)
 
@@ -87,7 +88,7 @@ class Enrollment(models.Model):
 
     def __str__(self):
         return str(self.assigned_identifier)
-        
+
     def assign_random_identifier(self, raw_identifier):
         if raw_identifier == self.current_raw_identifier():
             return # Same as current - don't add
@@ -98,15 +99,14 @@ class Enrollment(models.Model):
             self.raw_identifier = encrypted_identifier
         else:
             self.raw_identifier = raw_identifier
-            
+
         if self.assigned_identifier == 'changeme' or self.assigned_identifier is None:
             self.assigned_identifier = generate_unique_identifier()
 
-        self.save()     
+        self.save()
 
     def current_raw_identifier(self):
         if self.raw_identifier is not None and self.raw_identifier.startswith('secret:'):
             return decrypt_value(self.raw_identifier)
 
         return self.raw_identifier
-

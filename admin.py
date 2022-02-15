@@ -1,14 +1,6 @@
-from django.contrib import admin
-
 # pylint: disable=no-member, line-too-long
 
-import datetime
-
-from prettyjson import PrettyJSONWidget
-
-from django.contrib.admin import SimpleListFilter
 from django.contrib.gis import admin
-from django.contrib.postgres.fields import JSONField
 
 from .models import Enrollment, ExtensionRuleSet
 
