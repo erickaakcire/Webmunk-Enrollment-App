@@ -21,7 +21,6 @@ jobs:
           POSTGRES_DB: circle_test
           POSTGRES_PASSWORD: ""
     steps:
-      - node/install
       - checkout
       - restore_cache:
           key: venv-{{ .Branch }}-{{ checksum "requirements.txt" }}-v1
