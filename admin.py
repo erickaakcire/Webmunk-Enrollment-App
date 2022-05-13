@@ -2,12 +2,12 @@
 
 from django.contrib.gis import admin
 
-from .models import Enrollment, ExtensionRuleSet
+from .models import Enrollment, ExtensionRuleSet, ScheduledTask
 
 @admin.register(Enrollment)
 class EnrollmentAdmin(admin.OSMGeoAdmin):
-    list_display = ('assigned_identifier', 'enrolled', 'last_fetched')
-    list_filter = ('enrolled', 'last_fetched')
+    list_display = ('assigned_identifier', 'enrolled', 'rule_set', 'last_fetched')
+    list_filter = ('enrolled', 'last_fetched', 'rule_set', )
 
     search_fields = ('assigned_identifier',)
 
@@ -17,3 +17,10 @@ class ExtensionRuleSetAdmin(admin.OSMGeoAdmin):
     list_filter = ('is_active', 'is_default',)
 
     search_fields = ('name', 'rule_json')
+
+@admin.register(ScheduledTask)
+class ScheduledTaskAdmin(admin.OSMGeoAdmin):
+    list_display = ('enrollment', 'slug', 'task', 'active', 'last_check', 'completed')
+    list_filter = ('active', 'completed', 'last_check', 'slug',)
+
+    search_fields = ('task', 'slug', 'url',)

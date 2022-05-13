@@ -2,14 +2,15 @@
 
 import json
 
+from django.conf import settings
 from django.http import HttpResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
-from .models import Enrollment, ExtensionRuleSet
+from .models import Enrollment, ExtensionRuleSet, ScheduledTask
 
 @csrf_exempt
-def enroll(request):
+def enroll(request): # pylint: disable=too-many-branches
     raw_identifier = request.POST.get('identifier', request.GET.get('identifier', None))
 
     payload = {}
@@ -41,15 +42,33 @@ def enroll(request):
             'actions': {},
         }
 
-        if found_enrollment.rule_set is None:
-            default_rules = ExtensionRuleSet.objects.filter(is_default=True).first()
+        try:
+            settings.WEBMUNK_UPDATE_TASKS(found_enrollment, ScheduledTask)
+        except AttributeError:
+            pass
 
-            if default_rules is not None:
-                found_enrollment.rule_set = default_rules
-                found_enrollment.save()
+        try:
+            settings.WEBMUNK_ASSIGN_RULES(found_enrollment, ExtensionRuleSet)
+        except AttributeError:
+            if found_enrollment.rule_set is None:
+                selected_rules = ExtensionRuleSet.objects.filter(is_default=True).first()
+
+                if selected_rules is not None:
+                    found_enrollment.rule_set = selected_rules
+                    found_enrollment.save()
 
         if found_enrollment.rule_set is not None and found_enrollment.rule_set.is_active:
             payload['rules'] = found_enrollment.rule_set.rules()
+
+            tasks = []
+
+            for task in found_enrollment.tasks.filter(completed=None, active__lte=now).order_by('active'):
+                tasks.append({
+                    'message':  task.task,
+                    "url": task.url
+                })
+
+            payload['rules']['tasks'] = tasks
         else:
             payload['error'] = 'Participant not configured with ruleset and no default ruleset selected.'
     else:

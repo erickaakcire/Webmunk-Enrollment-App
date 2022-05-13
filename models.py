@@ -110,3 +110,16 @@ class Enrollment(models.Model):
             return decrypt_value(self.raw_identifier)
 
         return self.raw_identifier
+
+@python_2_unicode_compatible
+class ScheduledTask(models.Model):
+    enrollment = models.ForeignKey(Enrollment, related_name='tasks', on_delete=models.CASCADE)
+
+    active = models.DateTimeField()
+
+    task = models.CharField(max_length=1024)
+    slug = models.SlugField(max_length=1024)
+    url = models.URLField(max_length=1024)
+
+    last_check = models.DateTimeField(null=True, blank=True)
+    completed = models.DateTimeField(null=True, blank=True)
