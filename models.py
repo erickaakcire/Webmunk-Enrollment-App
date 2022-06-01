@@ -9,6 +9,7 @@ from six import python_2_unicode_compatible
 
 from django.conf import settings
 from django.contrib.gis.db import models
+from django.utils import timezone
 from django.utils.encoding import smart_str
 
 def decrypt_value(stored_text):
@@ -123,3 +124,26 @@ class ScheduledTask(models.Model):
 
     last_check = models.DateTimeField(null=True, blank=True)
     completed = models.DateTimeField(null=True, blank=True)
+
+    def is_complete(self):
+        now = timezone.now()
+
+        if self.active > now:
+            return False
+
+        if self.completed is not None:
+            return True
+
+        self.last_check = now
+        self.save()
+
+        try:
+            if settings.WEBMUNK_CHECK_TASK_COMPLETE(self):
+                self.completed = now
+                self.save()
+
+                return True
+        except AttributeError:
+            pass
+
+        return False

@@ -74,4 +74,9 @@ def enroll(request): # pylint: disable=too-many-branches
     else:
         payload['error'] = 'Unable to retrieve original raw identifier from the request. Please fix and try again.'
 
+    try:
+        settings.WEBMUNK_UPDATE_ALL_RULE_SETS(payload)
+    except AttributeError:
+        pass
+
     return HttpResponse(json.dumps(payload, indent=2), content_type='application/json', status=200)
