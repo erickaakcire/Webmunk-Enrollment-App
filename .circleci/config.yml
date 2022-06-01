@@ -43,6 +43,7 @@ jobs:
             cp enrollment/circle_settings.py django_site/settings.py
             cp enrollment/circle_urls.py django_site/urls.py
             git clone https://github.com/audacious-software/Quicksilver-Django.git quicksilver
+            pip install -r quicksilver/requirements.txt --progress-bar off
             python manage.py migrate
             python manage.py test
             cp enrollment/.pylintrc .
