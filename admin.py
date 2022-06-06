@@ -18,9 +18,15 @@ class ExtensionRuleSetAdmin(admin.OSMGeoAdmin):
 
     search_fields = ('name', 'rule_json')
 
+def reset_scheduled_task_completions(modeladmin, request, queryset): # pylint: disable=unused-argument, invalid-name
+    queryset.update(completed=None)
+
+reset_scheduled_task_completions.description = 'Reset scheduled task completions'
+
 @admin.register(ScheduledTask)
 class ScheduledTaskAdmin(admin.OSMGeoAdmin):
     list_display = ('enrollment', 'slug', 'task', 'active', 'last_check', 'completed')
     list_filter = ('active', 'completed', 'last_check', 'slug',)
 
     search_fields = ('task', 'slug', 'url',)
+    actions = [reset_scheduled_task_completions]

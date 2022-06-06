@@ -30,6 +30,7 @@ def enroll(request): # pylint: disable=too-many-branches
             found_enrollment = Enrollment(enrolled=now, last_fetched=now)
 
             found_enrollment.assign_random_identifier(raw_identifier)
+            found_enrollment.save()
         else:
             found_enrollment.last_fetched = now
             found_enrollment.save()
@@ -43,11 +44,6 @@ def enroll(request): # pylint: disable=too-many-branches
         }
 
         try:
-            settings.WEBMUNK_UPDATE_TASKS(found_enrollment, ScheduledTask)
-        except AttributeError:
-            pass
-
-        try:
             settings.WEBMUNK_ASSIGN_RULES(found_enrollment, ExtensionRuleSet)
         except AttributeError:
             if found_enrollment.rule_set is None:
@@ -57,14 +53,21 @@ def enroll(request): # pylint: disable=too-many-branches
                     found_enrollment.rule_set = selected_rules
                     found_enrollment.save()
 
+        try:
+            settings.WEBMUNK_UPDATE_TASKS(found_enrollment, ScheduledTask)
+        except AttributeError:
+            pass
+
         if found_enrollment.rule_set is not None and found_enrollment.rule_set.is_active:
             payload['rules'] = found_enrollment.rule_set.rules()
 
             tasks = []
 
+            now = timezone.now()
+
             for task in found_enrollment.tasks.filter(completed=None, active__lte=now).order_by('active'):
                 tasks.append({
-                    'message':  task.task,
+                    'message': task.task,
                     "url": task.url
                 })
 
