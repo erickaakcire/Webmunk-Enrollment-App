@@ -87,8 +87,10 @@ class Command(BaseCommand):
                                 with zipfile.ZipFile(zip_in) as zip_file:
                                     for name in zip_file.namelist():
                                         if name.endswith('.json'):
-                                            with json.load(zip_file.open(name)) as export_file:
-                                                for survey_response in export_file.get('responses', []):
+                                            with zip_file.open(name) as export_file:
+                                                response_file = json.load(export_file)
+
+                                                for survey_response in response_file.get('responses', []):
                                                     webmunk_id = survey_response.get('values', {}).get('webmunk_id', None)
 
                                                     if webmunk_id is not None:

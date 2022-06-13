@@ -3,7 +3,8 @@
 import json
 
 from django.conf import settings
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
+from django.shortcuts import render
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
@@ -83,3 +84,26 @@ def enroll(request): # pylint: disable=too-many-branches
         pass
 
     return HttpResponse(json.dumps(payload, indent=2), content_type='application/json', status=200)
+
+@csrf_exempt
+def uninstall(request): # pylint: disable=too-many-branches
+    raw_identifier = request.POST.get('identifier', request.GET.get('identifier', None))
+
+    now = timezone.now()
+
+    if raw_identifier is not None:
+        found_enrollment = None
+
+        for enrollment in Enrollment.objects.all():
+            if raw_identifier in (enrollment.current_raw_identifier(), enrollment.assigned_identifier,):
+                found_enrollment = enrollment
+
+                break
+
+        if found_enrollment is not None:
+            found_enrollment.last_uninstalled = now
+            found_enrollment.save()
+
+            return render(request, 'webmunk_uninstall.html')
+
+    raise Http404

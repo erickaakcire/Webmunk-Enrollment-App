@@ -84,6 +84,7 @@ class Enrollment(models.Model):
 
     enrolled = models.DateTimeField()
     last_fetched = models.DateTimeField()
+    last_uninstalled = models.DateTimeField(null=True, blank=True)
 
     rule_set = models.ForeignKey(ExtensionRuleSet, related_name='enrollments', null=True, blank=True, on_delete=models.SET_NULL)
 
