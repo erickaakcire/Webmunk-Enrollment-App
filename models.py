@@ -53,7 +53,7 @@ def generate_unique_identifier():
         try:
             identifier = settings.ENROLLMENT_GENERATE_IDENTIFIER()
         except AttributeError:
-            identifier = str(random.randint(1, 99999999)) # nosec
+            identifier = str(random.randint(10000000, 99999999)) # nosec
 
             identifier = identifier.zfill(8)
 
