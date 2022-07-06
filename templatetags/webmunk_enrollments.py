@@ -19,6 +19,6 @@ def fetch_completed_task(enrollment, slug):
         if summary is not None:
             value = value + '<br />' + summary
 
-        return mark_safe(value)
+        return mark_safe(value) # nosec
 
     return ''
