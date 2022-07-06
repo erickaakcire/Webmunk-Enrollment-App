@@ -1,0 +1,15 @@
+Dear Webmunk Study Participant,
+
+This email contains the next steps required to complete the study and earn your first $10 gift card. As a reminder, your Webmunk ID is {{ identifier }} and you can always access the Webmunk extension in the top right corner of the browser. Please complete the {{ tasks.count }} task(s) below to receive your payment.
+
+{% for task in tasks %}{{ forloop.counter }}. {{ task.name }}: 
+{{ task.url }}
+
+{% endfor %}
+You can also access these links directly through the Webmunk extension. Once we see that you have completed the tasks, we will email you your gift card.
+
+If you have questions about the study or need technical support, please contact the Webmunk team at webmunk_study@hbs.edu.
+
+Thank you!
+
+The Webmunk Team

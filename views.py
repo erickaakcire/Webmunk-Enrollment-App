@@ -3,6 +3,7 @@
 import json
 
 from django.conf import settings
+from django.contrib.admin.views.decorators import staff_member_required
 from django.http import HttpResponse, Http404
 from django.shortcuts import render
 from django.utils import timezone
@@ -107,3 +108,11 @@ def uninstall(request): # pylint: disable=too-many-branches
             return render(request, 'webmunk_uninstall.html')
 
     raise Http404
+
+@staff_member_required
+def enrollments(request):
+    context = {
+        'enrollments': Enrollment.objects.all().order_by('-enrolled')
+    }
+
+    return render(request, 'webmunk_enrollments.html', context=context)

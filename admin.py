@@ -2,7 +2,7 @@
 
 from django.contrib.gis import admin
 
-from .models import Enrollment, ExtensionRuleSet, ScheduledTask
+from .models import Enrollment, ExtensionRuleSet, ScheduledTask, RuleMatchCount
 
 @admin.register(Enrollment)
 class EnrollmentAdmin(admin.OSMGeoAdmin):
@@ -30,3 +30,10 @@ class ScheduledTaskAdmin(admin.OSMGeoAdmin):
 
     search_fields = ('task', 'slug', 'url',)
     actions = [reset_scheduled_task_completions]
+
+@admin.register(RuleMatchCount)
+class RuleMatchCountAdmin(admin.OSMGeoAdmin):
+    list_display = ('url', 'pattern', 'matches', 'checked')
+    list_filter = ('checked', 'url', 'pattern',)
+
+    search_fields = ('url', 'pattern',)

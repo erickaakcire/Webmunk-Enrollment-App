@@ -1,0 +1,90 @@
+{% load static %}
+{% load webmunk_enrollments %}
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta name="description" content="">
+		<title>Enrollments | Webmunk</title>
+		<!-- Bootstrap core CSS -->
+		<link href="{% static 'enrollment/vendor/css/bootstrap.css' %}" rel="stylesheet">
+
+		<!-- Favicons -->
+		<meta name="theme-color" content="#7952b3">
+		<style>
+			.bd-placeholder-img {
+				font-size: 1.125rem;
+				text-anchor: middle;
+				-webkit-user-select: none;
+				-moz-user-select: none;
+				user-select: none;
+			}
+
+			@media (min-width: 768px) {
+				.bd-placeholder-img-lg {
+					font-size: 3.5rem;
+				}
+			}
+
+			/* Show it's not fixed to the top */
+			body {
+				min-height: 75rem;
+			}
+		</style>
+	</head>
+	<body>
+		<nav class="navbar navbar-expand-md navbar-dark bg-dark mb-4">
+			<div class="container-fluid">
+				<a class="navbar-brand" href="#">Enrollments</a>
+				<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+					<span class="navbar-toggler-icon"></span>
+				</button>
+				<div class="collapse navbar-collapse" id="navbarCollapse">
+				</div>
+			</div>
+		</nav>
+
+		<main class="container">
+			<table class="table small">
+				<thead>
+					<tr>
+						<th scope="col">ID</th>
+						<th scope="col">Original ID</th>
+						<th scope="col">Rule Set</th>
+						<th scope="col">Enrolled</th>
+						<th scope="col">Last Updated</th>
+						<th scope="col">Latest Data Point</th>
+						<th scope="col">Uninstalled</th>
+						<th scope="col">Survey</th>
+						<th scope="col">Upload</th>
+						<th scope="col">Upload</th>
+						<th scope="col">Survey</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for enrollment in enrollments %}
+						<tr>
+							<th scope="row">{{ enrollment.assigned_identifier }}</th>
+							<td>{{ enrollment.current_raw_identifier }}</td>
+							<td>{{ enrollment.rule_set }}</td>
+							<td>{{ enrollment.enrolled|date:'Y-m-d H:i' }}</td>
+							<td>{{ enrollment.last_fetched|date:'Y-m-d H:i' }}</td>
+							{% if enrollment.latest_data_point %}
+								<td>{{ enrollment.latest_data_point|date:'Y-m-d H:i' }}</td>
+							{% else %}
+								<td></td>
+							{% endif %}
+							<td>{{ enrollment.last_uninstalled|date:'Y-m-d H:i' }}</td>
+							<td>{{ enrollment|fetch_completed_task:'qualtrics-initial' }}</td>
+							<td>{{ enrollment|fetch_completed_task:'upload-amazon-start' }}</td>
+							<td>{{ enrollment|fetch_completed_task:'upload-amazon-final' }}</td>
+							<td>{{ enrollment|fetch_completed_task:'qualtrics-final' }}</td>
+						</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		</main>
+		<script src="{% static 'enrollment/vendor/js/bootstrap.js' %}" crossorigin="anonymous"></script>
+	</body>
+</html>

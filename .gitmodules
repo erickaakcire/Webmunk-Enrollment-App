@@ -1,0 +1,3 @@
+[submodule "vendor/pdk_client"]
+	path = vendor/pdk_client
+	url = https://github.com/audacious-software/PassiveDataKit-Client-Python.git

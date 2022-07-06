@@ -4,6 +4,9 @@ import base64
 import json
 import random
 
+import arrow
+import pytz
+
 from nacl.secret import SecretBox
 from six import python_2_unicode_compatible
 
@@ -88,6 +91,22 @@ class Enrollment(models.Model):
 
     rule_set = models.ForeignKey(ExtensionRuleSet, related_name='enrollments', null=True, blank=True, on_delete=models.SET_NULL)
 
+    contact_after = models.DateTimeField(null=True, blank=True)
+
+    metadata = models.TextField(max_length=(16 * 1024 * 1024), default='{}')
+
+    def latest_data_point(self):
+        metadata = json.loads(self.metadata)
+
+        latest = metadata.get('latest_data_point', None)
+
+        if latest is not None:
+            here_tz = pytz.timezone(settings.TIME_ZONE)
+
+            return arrow.get(latest).datetime.astimezone(here_tz)
+
+        return None
+
     def __str__(self):
         return str(self.assigned_identifier)
 
@@ -126,6 +145,11 @@ class ScheduledTask(models.Model):
     last_check = models.DateTimeField(null=True, blank=True)
     completed = models.DateTimeField(null=True, blank=True)
 
+    metadata = models.TextField(max_length=(16 * 1024 * 1024), default='{}')
+
+    def fetch_metadata(self):
+        return json.loads(self.metadata)
+
     def is_complete(self):
         now = timezone.now()
 
@@ -148,3 +172,14 @@ class ScheduledTask(models.Model):
             pass
 
         return False
+
+@python_2_unicode_compatible
+class RuleMatchCount(models.Model):
+    url = models.URLField(max_length=1024)
+    pattern = models.CharField(max_length=1024)
+    matches = models.IntegerField()
+
+    checked = models.DateTimeField()
+
+    def __str__(self):
+        return '%s[%s]: %s (%s)' % (self.url, self.pattern, self.matches, self.checked)
