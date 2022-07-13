@@ -1,5 +1,6 @@
 # pylint: disable=line-too-long, no-member
 
+import datetime
 import json
 
 from django.conf import settings
@@ -116,3 +117,12 @@ def enrollments(request):
     }
 
     return render(request, 'webmunk_enrollments.html', context=context)
+
+def unsubscribe_reminders(request, identifier):
+    context = {}
+
+    later = timezone.now() + datetime.timedelta(days=(365 * 250))
+
+    Enrollment.objects.filter(assigned_identifier=identifier).update(contact_after=later)
+
+    return render(request, 'webmunk_unsubscribe_reminders.html', context=context)
