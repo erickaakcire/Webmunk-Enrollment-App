@@ -73,6 +73,8 @@ class Command(BaseCommand):
 
                 driver.execute_script(script)
 
+                page_content = driver.execute_script("return document.documentElement.outerHTML;")
+
                 for entry in driver.get_log('browser'):
                     if 'WEBMUNK-JSON:' in entry.get('message', ''):
                         tokens = entry['message'].split('WEBMUNK-JSON:')
@@ -84,8 +86,13 @@ class Command(BaseCommand):
                         # print('[console.log.count] %s' % json.dumps(counts, indent=2))
 
                         for pattern in counts.keys():
-                            RuleMatchCount.objects.create(url=url, pattern=pattern, matches=counts[pattern], checked=timezone.now())
+                            RuleMatchCount.objects.create(url=url, pattern=pattern, matches=counts[pattern], checked=timezone.now(), content=page_content)
+
+                            if page_content is not None:
+                                page_content = None
+
                     # else:
                     #    print('[console.log] %s' % json.dumps(entry, indent=2))
+
 
             driver.quit()

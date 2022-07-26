@@ -181,5 +181,13 @@ class RuleMatchCount(models.Model):
 
     checked = models.DateTimeField()
 
+    content = models.TextField(null=True, blank=True, max_length=(64 * 1024 * 1024))
+
     def __str__(self):
         return '%s[%s]: %s (%s)' % (self.url, self.pattern, self.matches, self.checked)
+
+    def content_length(self):
+        if self.content is not None:
+            return len(self.content)
+
+        return None

@@ -33,7 +33,7 @@ class ScheduledTaskAdmin(admin.OSMGeoAdmin):
 
 @admin.register(RuleMatchCount)
 class RuleMatchCountAdmin(admin.OSMGeoAdmin):
-    list_display = ('url', 'pattern', 'matches', 'checked')
+    list_display = ('url', 'pattern', 'matches', 'checked', 'content_length',)
     list_filter = ('checked', 'url', 'pattern',)
 
-    search_fields = ('url', 'pattern',)
+    search_fields = ('url', 'pattern', 'content',)
