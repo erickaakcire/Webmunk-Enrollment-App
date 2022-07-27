@@ -1,6 +1,8 @@
 # pylint: disable=line-too-long, no-member
 
+import csv
 import datetime
+import io
 import json
 
 from django.conf import settings
@@ -126,3 +128,112 @@ def unsubscribe_reminders(request, identifier):
     Enrollment.objects.filter(assigned_identifier=identifier).update(contact_after=later)
 
     return render(request, 'webmunk_unsubscribe_reminders.html', context=context)
+
+
+@staff_member_required
+def enrollments_txt(request): # pylint: disable=unused-argument, too-many-branches, too-many-statements
+    output = io.StringIO()
+
+    writer = csv.writer(output, delimiter='\t')
+
+    header = [
+        'ID',
+        'Original ID',
+        'Rule Set',
+        'Enrolled',
+        'Last Updated',
+        'Latest Data Point',
+        'Uninstalled',
+        'Intake Survey Completed',
+        'First Amazon History Uploaded',
+        'First Amazon Upload Count',
+        'Final Amazon History Uploaded',
+        'Final Amazon Upload Count',
+        'Final Survey Completed',
+    ]
+
+    writer.writerow(header)
+
+    for enrollment in Enrollment.objects.all().order_by('assigned_identifier'):
+        enrollment_values = []
+
+        enrollment_values.append(enrollment.assigned_identifier)
+        enrollment_values.append(enrollment.current_raw_identifier())
+        enrollment_values.append(str(enrollment.rule_set))
+
+        enrollment_values.append(enrollment.enrolled.strftime('%Y-%m-%d %H:%M'))
+
+        if enrollment.last_fetched is not None:
+            enrollment_values.append(enrollment.last_fetched.strftime('%Y-%m-%d %H:%M'))
+        else:
+            enrollment_values.append('')
+
+        latest_data_point = enrollment.latest_data_point()
+
+        if latest_data_point is not None:
+            enrollment_values.append(latest_data_point.strftime('%Y-%m-%d %H:%M'))
+        else:
+            enrollment_values.append('')
+
+        if enrollment.last_uninstalled is not None:
+            enrollment_values.append(enrollment.last_uninstalled.strftime('%Y-%m-%d %H:%M'))
+        else:
+            enrollment_values.append('')
+
+        task = enrollment.tasks.filter(slug='qualtrics-initial').exclude(completed=None).first()
+
+        if task is not None:
+            enrollment_values.append(task.completed.strftime('%Y-%m-%d %H:%M'))
+        else:
+            enrollment_values.append('')
+
+        task = enrollment.tasks.filter(slug='upload-amazon-start').exclude(completed=None).first()
+
+        if task is not None:
+            enrollment_values.append(task.completed.strftime('%Y-%m-%d %H:%M'))
+
+            metadata = {}
+
+            if task.metadata is not None and task.metadata != '':
+                metadata = json.loads(task.metadata)
+
+            item_count = metadata.get('item_count', '')
+
+            enrollment_values.append(str(item_count))
+        else:
+            enrollment_values.append('')
+            enrollment_values.append('')
+
+        task = enrollment.tasks.filter(slug='upload-amazon-final').exclude(completed=None).first()
+
+        if task is not None:
+            enrollment_values.append(task.completed.strftime('%Y-%m-%d %H:%M'))
+
+            metadata = {}
+
+            if task.metadata is not None and task.metadata != '':
+                metadata = json.loads(task.metadata)
+
+            item_count = metadata.get('item_count', '')
+
+            enrollment_values.append(str(item_count))
+
+        else:
+            enrollment_values.append('')
+            enrollment_values.append('')
+
+        task = enrollment.tasks.filter(slug='qualtrics-final').exclude(completed=None).first()
+
+        if task is not None:
+            enrollment_values.append(task.completed.strftime('%Y-%m-%d %H:%M'))
+        else:
+            enrollment_values.append('')
+
+        # enrollment_values.append('-')
+
+        writer.writerow(enrollment_values)
+
+    response = HttpResponse(output.getvalue(), content_type='text/csv', status=200)
+    response['Content-Disposition'] = 'attachment; filename= "webmunk-enrollments.txt"'
+
+    return response

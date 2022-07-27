@@ -9,6 +9,7 @@
 		<title>Enrollments | Webmunk</title>
 		<!-- Bootstrap core CSS -->
 		<link href="{% static 'enrollment/vendor/css/bootstrap.css' %}" rel="stylesheet">
+		<link href="{% static 'enrollment/vendor/css/bootstrap-table.css' %}" rel="stylesheet">
 
 		<!-- Favicons -->
 		<meta name="theme-color" content="#7952b3">
@@ -31,6 +32,15 @@
 			body {
 				min-height: 75rem;
 			}
+			
+			.navbar a {
+				color: white;
+				text-decoration: none;
+			}
+
+			.navbar a:hover {
+				text-decoration: underline;
+			}
 		</style>
 	</head>
 	<body>
@@ -40,26 +50,28 @@
 				<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
 					<span class="navbar-toggler-icon"></span>
 				</button>
-				<div class="collapse navbar-collapse" id="navbarCollapse">
-				</div>
-			</div>
+				<div class="collapse navbar-collapse" id="navbarCollapse"></div>
+				<ul class="nav navbar-nav navbar-right">
+					<li><a href="{% url 'enrollments_txt' %}">Download CSV</a></li>
+				</ul>
+    		</div>
 		</nav>
 
 		<main class="container">
-			<table class="table small">
+			<table class="table small" data-toggle="table" data-pagination="true" data-search="true" data-page-list="[10, 25, 50, 100]">
 				<thead>
 					<tr>
-						<th scope="col">ID</th>
-						<th scope="col">Original ID</th>
-						<th scope="col">Rule Set</th>
-						<th scope="col">Enrolled</th>
-						<th scope="col">Last Updated</th>
-						<th scope="col">Latest Data Point</th>
-						<th scope="col">Uninstalled</th>
-						<th scope="col">Survey</th>
-						<th scope="col">Upload</th>
-						<th scope="col">Upload</th>
-						<th scope="col">Survey</th>
+						<th scope="col" data-sortable="true">ID</th>
+						<th scope="col" data-sortable="true">Original ID</th>
+						<th scope="col" data-sortable="true">Rule Set</th>
+						<th scope="col" data-sortable="true">Enrolled</th>
+						<th scope="col" data-sortable="true">Last Updated</th>
+						<th scope="col" data-sortable="true">Latest Data Point</th>
+						<th scope="col" data-sortable="true">Uninstalled</th>
+						<th scope="col" data-sortable="true">Intake Survey</th>
+						<th scope="col" data-sortable="true">Upload</th>
+						<th scope="col" data-sortable="true">Upload</th>
+						<th scope="col" data-sortable="true">Final Survey</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -85,6 +97,8 @@
 				</tbody>
 			</table>
 		</main>
-		<script src="{% static 'enrollment/vendor/js/bootstrap.js' %}" crossorigin="anonymous"></script>
+		<script src="{% static 'enrollment/vendor/js/jquery-3.6.0.min.js' %}" crossorigin="anonymous"></script>
+		<script src="{% static 'enrollment/vendor/js/bootstrap.bundle.min.js' %}" crossorigin="anonymous"></script>
+		<script src="{% static 'enrollment/vendor/js/bootstrap-table.js' %}" crossorigin="anonymous"></script>
 	</body>
 </html>

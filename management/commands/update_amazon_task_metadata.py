@@ -31,11 +31,17 @@ class Command(BaseCommand):
             if options.get('force', False) or ('item_count' in metadata) is False:
                 query = client.query_data_points(page_size=32)
 
-                item_count = query.filter(generator_identifier='pdk-external-amazon-item', source=task.enrollment.assigned_identifier).count()
+                item_count = -1
 
-                metadata['item_count'] = item_count
+                if task.slug == 'upload-amazon-start':
+                    item_count = query.filter(generator_identifier='pdk-external-amazon-item', source=task.enrollment.assigned_identifier, created__lte=task.enrollment.enrolled).count()
+                else:
+                    item_count = query.filter(generator_identifier='pdk-external-amazon-item', source=task.enrollment.assigned_identifier, created__gte=task.enrollment.enrolled).count()
 
-                metadata['summary'] = '%d item(s)' % item_count
+                if item_count >= 0:
+                    metadata['item_count'] = item_count
 
-                task.metadata = json.dumps(metadata, indent=2)
-                task.save()
+                    metadata['summary'] = '%d item(s)' % item_count
+
+                    task.metadata = json.dumps(metadata, indent=2)
+                    task.save()
