@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=no-member,line-too-long
 
+import datetime
 import json
+
+import arrow
+import requests
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
@@ -25,7 +29,7 @@ class Command(BaseCommand):
 
         client = PDKClient(site_url=settings.PDK_API_URL, token=settings.PDK_API_TOKEN)
 
-        for task in amazon_tasks:
+        for task in amazon_tasks: # pylint: disable=too-many-nested-blocks
             metadata = json.loads(task.metadata)
 
             if options.get('force', False) or ('item_count' in metadata) is False:
@@ -33,15 +37,44 @@ class Command(BaseCommand):
 
                 item_count = -1
 
+                amazon_items = []
+
                 if task.slug == 'upload-amazon-start':
-                    item_count = query.filter(generator_identifier='pdk-external-amazon-item', source=task.enrollment.assigned_identifier, created__lte=task.enrollment.enrolled).count()
+                    amazon_items = query.filter(generator_identifier='pdk-external-amazon-item', source=task.enrollment.assigned_identifier, created__lte=task.enrollment.enrolled)
+                    item_count = amazon_items.count()
                 else:
-                    item_count = query.filter(generator_identifier='pdk-external-amazon-item', source=task.enrollment.assigned_identifier, created__gte=task.enrollment.enrolled).count()
+                    amazon_items = query.filter(generator_identifier='pdk-external-amazon-item', source=task.enrollment.assigned_identifier, created__gte=task.enrollment.enrolled).order_by('-recorded')
+                    item_count = amazon_items.count()
 
-                if item_count >= 0:
-                    metadata['item_count'] = item_count
+                metadata['item_count'] = item_count
+                metadata['summary'] = '%d item(s)' % item_count
 
-                    metadata['summary'] = '%d item(s)' % item_count
+                if item_count > 0:
+                    pdk_ed_url  = 'https://pilot.webmunk.org/data/external/uploads/%s.json' % task.enrollment.assigned_identifier
 
-                    task.metadata = json.dumps(metadata, indent=2)
-                    task.save()
+                    amazon_divider = task.enrollment.enrolled + datetime.timedelta(days=settings.WEBMUNK_DATA_FOLLOWUP_DAYS)
+
+                    try:
+                        response = requests.get(pdk_ed_url)
+
+                        if response.status_code == 200:
+                            uploaded_items = response.json()
+
+                            for item in uploaded_items:
+                                if item['source'] == 'amazon':
+                                    item_upload = arrow.get(item['uploaded']).datetime
+
+                                    if task.slug == 'upload-amazon-start' and item_upload < amazon_divider:
+                                        task.completed = item_upload
+                                        break
+
+                                    if task.slug == 'upload-amazon-final' and item_upload > amazon_divider:
+                                        task.completed = item_upload
+                                        break
+                        else:
+                            print('RESP[%s]: %s -- %d' % (task.enrollment.assigned_identifier, pdk_ed_url, response.status_code))
+                    except requests.exceptions.ConnectionError:
+                        print('RESP[%s]: %s -- Unable to connect' % (task.enrollment.assigned_identifier, pdk_ed_url))
+
+                task.metadata = json.dumps(metadata, indent=2)
+                task.save()

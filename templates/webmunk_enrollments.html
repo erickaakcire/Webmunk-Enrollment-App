@@ -1,4 +1,5 @@
 {% load static %}
+{% load tz %}
 {% load webmunk_enrollments %}
 <!doctype html>
 <html lang="en">
@@ -80,14 +81,14 @@
 							<th scope="row">{{ enrollment.assigned_identifier }}</th>
 							<td>{{ enrollment.current_raw_identifier }}</td>
 							<td>{{ enrollment.rule_set }}</td>
-							<td>{{ enrollment.enrolled|date:'Y-m-d H:i' }}</td>
-							<td>{{ enrollment.last_fetched|date:'Y-m-d H:i' }}</td>
+							<td>{{ enrollment.enrolled|localtime|date:'Y-m-d H:i' }}</td>
+							<td>{{ enrollment.last_fetched|localtime|date:'Y-m-d H:i' }}</td>
 							{% if enrollment.latest_data_point %}
-								<td>{{ enrollment.latest_data_point|date:'Y-m-d H:i' }}</td>
+								<td>{{ enrollment.latest_data_point|localtime|date:'Y-m-d H:i' }}</td>
 							{% else %}
 								<td></td>
 							{% endif %}
-							<td>{{ enrollment.last_uninstalled|date:'Y-m-d H:i' }}</td>
+							<td>{{ enrollment.last_uninstalled|localtime|date:'Y-m-d H:i' }}</td>
 							<td>{{ enrollment|fetch_completed_task:'qualtrics-initial' }}</td>
 							<td>{{ enrollment|fetch_completed_task:'upload-amazon-start' }}</td>
 							<td>{{ enrollment|fetch_completed_task:'upload-amazon-final' }}</td>

@@ -5,6 +5,8 @@ import datetime
 import io
 import json
 
+import pytz
+
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.http import HttpResponse, Http404
@@ -152,6 +154,8 @@ def enrollments_txt(request): # pylint: disable=unused-argument, too-many-branch
         'Final Survey Completed',
     ]
 
+    here_tz = pytz.timezone(settings.TIME_ZONE)
+
     writer.writerow(header)
 
     for enrollment in Enrollment.objects.all().order_by('assigned_identifier'):
@@ -161,36 +165,36 @@ def enrollments_txt(request): # pylint: disable=unused-argument, too-many-branch
         enrollment_values.append(enrollment.current_raw_identifier())
         enrollment_values.append(str(enrollment.rule_set))
 
-        enrollment_values.append(enrollment.enrolled.strftime('%Y-%m-%d %H:%M'))
+        enrollment_values.append(enrollment.enrolled.astimezone(here_tz).strftime('%Y-%m-%d %H:%M'))
 
         if enrollment.last_fetched is not None:
-            enrollment_values.append(enrollment.last_fetched.strftime('%Y-%m-%d %H:%M'))
+            enrollment_values.append(enrollment.last_fetched.astimezone(here_tz).strftime('%Y-%m-%d %H:%M'))
         else:
             enrollment_values.append('')
 
         latest_data_point = enrollment.latest_data_point()
 
         if latest_data_point is not None:
-            enrollment_values.append(latest_data_point.strftime('%Y-%m-%d %H:%M'))
+            enrollment_values.append(latest_data_point.astimezone(here_tz).strftime('%Y-%m-%d %H:%M'))
         else:
             enrollment_values.append('')
 
         if enrollment.last_uninstalled is not None:
-            enrollment_values.append(enrollment.last_uninstalled.strftime('%Y-%m-%d %H:%M'))
+            enrollment_values.append(enrollment.last_uninstalled.astimezone(here_tz).strftime('%Y-%m-%d %H:%M'))
         else:
             enrollment_values.append('')
 
         task = enrollment.tasks.filter(slug='qualtrics-initial').exclude(completed=None).first()
 
         if task is not None:
-            enrollment_values.append(task.completed.strftime('%Y-%m-%d %H:%M'))
+            enrollment_values.append(task.completed.astimezone(here_tz).strftime('%Y-%m-%d %H:%M'))
         else:
             enrollment_values.append('')
 
         task = enrollment.tasks.filter(slug='upload-amazon-start').exclude(completed=None).first()
 
         if task is not None:
-            enrollment_values.append(task.completed.strftime('%Y-%m-%d %H:%M'))
+            enrollment_values.append(task.completed.astimezone(here_tz).strftime('%Y-%m-%d %H:%M'))
 
             metadata = {}
 
@@ -207,7 +211,7 @@ def enrollments_txt(request): # pylint: disable=unused-argument, too-many-branch
         task = enrollment.tasks.filter(slug='upload-amazon-final').exclude(completed=None).first()
 
         if task is not None:
-            enrollment_values.append(task.completed.strftime('%Y-%m-%d %H:%M'))
+            enrollment_values.append(task.completed.astimezone(here_tz).strftime('%Y-%m-%d %H:%M'))
 
             metadata = {}
 
@@ -225,7 +229,7 @@ def enrollments_txt(request): # pylint: disable=unused-argument, too-many-branch
         task = enrollment.tasks.filter(slug='qualtrics-final').exclude(completed=None).first()
 
         if task is not None:
-            enrollment_values.append(task.completed.strftime('%Y-%m-%d %H:%M'))
+            enrollment_values.append(task.completed.astimezone(here_tz).strftime('%Y-%m-%d %H:%M'))
         else:
             enrollment_values.append('')
 
