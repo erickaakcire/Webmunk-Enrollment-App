@@ -33,14 +33,14 @@ class Command(BaseCommand):
 
         if pending_tasks.count() > 0: # pylint: disable=too-many-nested-blocks
             for survey_id in settings.WEBMUNK_QUALTRICS_SURVEY_IDS:
-                start_url = '%s/API/v3/surveys/%s/export-responses' % (settings.WEBMUNK_QUALTRICS_BASE_URL, survey_id[0])
+                start_url = '%s/API/v3/surveys/%s/export-responses' % (survey_id[2], survey_id[0])
 
                 data = { 'format': 'json' }
 
                 headers = {
                     'Content-type': 'application/json',
                     'Accept': 'text/plain',
-                    'X-API-TOKEN':  settings.WEBMUNK_QUALTRICS_API_TOKEN
+                    'X-API-TOKEN':  survey_id[3]
                 }
 
                 response = requests.post(start_url, data=json.dumps(data), headers=headers)
@@ -51,14 +51,16 @@ class Command(BaseCommand):
                     progress_id = response_json.get('result', {}).get('progressId', None)
 
                     if progress_id is not None:
-                        progress_url = '%s/API/v3/surveys/%s/export-responses/%s' % (settings.WEBMUNK_QUALTRICS_BASE_URL, survey_id[0], progress_id)
+                        progress_url = '%s/API/v3/surveys/%s/export-responses/%s' % (survey_id[2], survey_id[0], progress_id)
 
                         headers = {
-                            'X-API-TOKEN':  settings.WEBMUNK_QUALTRICS_API_TOKEN
+                            'X-API-TOKEN':  survey_id[3]
                         }
 
                         status = 'inProgress'
                         file_id = None
+
+                        print('STATUS: %s' % status)
 
                         while status == 'inProgress':
                             time.sleep(15)
@@ -75,10 +77,10 @@ class Command(BaseCommand):
                                 status = '404'
 
                         if status == 'complete' and file_id is not None:
-                            download_url = '%s/API/v3/surveys/%s/export-responses/%s/file' % (settings.WEBMUNK_QUALTRICS_BASE_URL, survey_id[0], file_id)
+                            download_url = '%s/API/v3/surveys/%s/export-responses/%s/file' % (survey_id[2], survey_id[0], file_id)
 
                             headers = {
-                                'X-API-TOKEN':  settings.WEBMUNK_QUALTRICS_API_TOKEN
+                                'X-API-TOKEN':  survey_id[3]
                             }
 
                             file_response = requests.get(download_url, headers=headers)
@@ -98,5 +100,7 @@ class Command(BaseCommand):
 
                                                         if enrollment is not None:
                                                             enrollment.tasks.filter(completed=None, active__lte=now, slug=survey_id[1]).update(completed=now)
+
+                                                            print('FINISHED %s -- %s' % (webmunk_id, survey_id[1]))
                 else:
-                    print('START NON-200 HTTP CODE: %d -- %s' % (response.status_code, start_url))
+                    print('START NON-200 HTTP CODE: %d -- %s: %s' % (response.status_code, start_url, response.text))
