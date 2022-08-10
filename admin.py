@@ -56,6 +56,6 @@ class PageContentAdmin(admin.OSMGeoAdmin):
         for link in obj.rule_matches.all().order_by('checked'):
             links.append('<a href="%s">%s</a>' % (reverse('admin:%s_%s_change' % ('enrollment', 'rulematchcount'), args=[link.id]), link))
 
-        return mark_safe('<br />'.join(links))
+        return mark_safe('<br />'.join(links)) # nosec
 
     rule_match_links.short_description = 'Rule matches'
