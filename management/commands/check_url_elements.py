@@ -14,7 +14,7 @@ from django.utils import timezone
 
 from quicksilver.decorators import handle_lock, handle_schedule, add_qs_arguments
 
-from ...models import ExtensionRuleSet, RuleMatchCount
+from ...models import ExtensionRuleSet, RuleMatchCount, PageContent
 
 class Command(BaseCommand):
     help = 'Checks outstanding tasks for completion'
@@ -73,7 +73,11 @@ class Command(BaseCommand):
 
                 driver.execute_script(script)
 
-                page_content = driver.execute_script("return document.documentElement.outerHTML;")
+                html_content = driver.execute_script("return document.documentElement.outerHTML;")
+
+                now = timezone.now().replace(microsecond=0, second=0)
+
+                page_content = PageContent.objects.create(url=url, retrieved=now, content=html_content)
 
                 for entry in driver.get_log('browser'):
                     if 'WEBMUNK-JSON:' in entry.get('message', ''):
@@ -86,13 +90,6 @@ class Command(BaseCommand):
                         # print('[console.log.count] %s' % json.dumps(counts, indent=2))
 
                         for pattern in counts.keys():
-                            RuleMatchCount.objects.create(url=url, pattern=pattern, matches=counts[pattern], checked=timezone.now(), content=page_content)
-
-                            if page_content is not None:
-                                page_content = None
-
-                    # else:
-                    #    print('[console.log] %s' % json.dumps(entry, indent=2))
-
+                            RuleMatchCount.objects.create(url=url, pattern=pattern, matches=counts[pattern], checked=now, page_content=page_content)
 
             driver.quit()

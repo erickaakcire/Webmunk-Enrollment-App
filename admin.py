@@ -1,8 +1,10 @@
 # pylint: disable=no-member, line-too-long
 
 from django.contrib.gis import admin
+from django.urls import reverse
+from django.utils.safestring import mark_safe
 
-from .models import Enrollment, ExtensionRuleSet, ScheduledTask, RuleMatchCount
+from .models import Enrollment, ExtensionRuleSet, ScheduledTask, RuleMatchCount, PageContent
 
 @admin.register(Enrollment)
 class EnrollmentAdmin(admin.OSMGeoAdmin):
@@ -35,5 +37,25 @@ class ScheduledTaskAdmin(admin.OSMGeoAdmin):
 class RuleMatchCountAdmin(admin.OSMGeoAdmin):
     list_display = ('url', 'pattern', 'matches', 'checked', 'content_length',)
     list_filter = ('checked', 'url', 'pattern',)
+    readonly_fields = ['page_content',]
 
-    search_fields = ('url', 'pattern', 'content',)
+    search_fields = ('url', 'pattern',)
+
+@admin.register(PageContent)
+class PageContentAdmin(admin.OSMGeoAdmin):
+    list_display = ('url', 'retrieved',)
+    list_filter = ('retrieved', 'url')
+
+    search_fields = ('url', 'content',)
+
+    readonly_fields = ['rule_match_links',]
+
+    def rule_match_links(self, obj): # pylint: disable=no-self-use
+        links = []
+
+        for link in obj.rule_matches.all().order_by('checked'):
+            links.append('<a href="%s">%s</a>' % (reverse('admin:%s_%s_change' % ('enrollment', 'rulematchcount'), args=[link.id]), link))
+
+        return mark_safe('<br />'.join(links))
+
+    rule_match_links.short_description = 'Rule matches'

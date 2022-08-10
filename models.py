@@ -1,6 +1,7 @@
 # pylint: disable=line-too-long, no-member
 
 import base64
+import datetime
 import json
 import random
 
@@ -174,6 +175,23 @@ class ScheduledTask(models.Model):
         return False
 
 @python_2_unicode_compatible
+class PageContent(models.Model):
+    url = models.URLField(max_length=1024)
+
+    retrieved = models.DateTimeField()
+
+    content = models.TextField(null=True, blank=True, max_length=(64 * 1024 * 1024))
+
+    def __str__(self):
+        return '%s (%s)' % (self.url, self.retrieved)
+
+    def content_length(self):
+        if self.content is not None:
+            return len(self.content)
+
+        return None
+
+@python_2_unicode_compatible
 class RuleMatchCount(models.Model):
     url = models.URLField(max_length=1024)
     pattern = models.CharField(max_length=1024)
@@ -181,13 +199,29 @@ class RuleMatchCount(models.Model):
 
     checked = models.DateTimeField()
 
-    content = models.TextField(null=True, blank=True, max_length=(64 * 1024 * 1024))
+    page_content = models.ForeignKey(PageContent, null=True, blank=True, related_name='rule_matches', on_delete=models.CASCADE)
 
     def __str__(self):
         return '%s[%s]: %s (%s)' % (self.url, self.pattern, self.matches, self.checked)
 
     def content_length(self):
-        if self.content is not None:
-            return len(self.content)
+        if self.page_content is not None:
+            return self.page_content.content_length()
 
         return None
+
+    def populate_content(self):
+        if self.page_content is None:
+            check_date = self.checked.replace(microsecond=0, second=0)
+
+            window_start = check_date - datetime.timedelta(seconds=60)
+            window_end = check_date + datetime.timedelta(seconds=60)
+
+            matching_page = PageContent.objects.filter(url=self.url, retrieved__gte=window_start, retrieved__lte=window_end).first()
+
+            if matching_page is not None:
+                self.page_content = matching_page
+                self.save()
+            elif self.content is not None:
+                self.page_content = PageContent.objects.create(url=self.url, retrieved=check_date, content=self.content)
+                self.save()
