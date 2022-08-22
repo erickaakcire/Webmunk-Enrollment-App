@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=no-member,line-too-long
 
+import datetime
 import io
 import json
 import time
@@ -25,8 +26,28 @@ class Command(BaseCommand):
 
     @handle_lock
     @handle_schedule
-    def handle(self, *args, **options): # pylint: disable=too-many-locals, too-many-branches
+    def handle(self, *args, **options): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
         now = timezone.now()
+
+        start_final_window = now - datetime.timedelta(days=70)
+        end_final_window = now - datetime.timedelta(days=42)
+
+        survey_expires = now - (end_final_window - start_final_window)
+
+        for enrollment in Enrollment.objects.filter(enrolled__lt=end_final_window):
+            if ScheduledTask.objects.filter(enrollment=enrollment, slug='qualtrics-final').count() == 0:
+                final_url = 'https://hbs.qualtrics.com/jfe/form/SV_6mObnu4EcTzvE0K?webmunk_id=%s' % enrollment.assigned_identifier
+
+                ScheduledTask.objects.create(enrollment=enrollment, active=now, task='Complete final survey', slug='qualtrics-final', url=final_url)
+
+        for incomplete in ScheduledTask.objects.filter(slug='qualtrics-final', completed=None, active__lt=survey_expires):
+            metadata = json.loads(incomplete.metadata)
+            metadata['summary'] = 'Survey expired'
+
+            incomplete.metadata = json.dumps(metadata, indent=2)
+            incomplete.completed = now
+
+            incomplete.save()
 
         pending_tasks = ScheduledTask.objects.filter(completed=None, active__lte=now, slug__startswith='qualtrics')
         pending_tasks.update(last_check=now)
