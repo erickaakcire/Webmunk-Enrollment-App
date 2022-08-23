@@ -29,7 +29,7 @@ class Command(BaseCommand):
             raw_identifier = enrollment.current_raw_identifier()
 
             if '@' in raw_identifier:
-                tasks = enrollment.tasks.filter(completed=None, active__lte=now)
+                tasks = enrollment.tasks.filter(completed=None, active__lte=now).order_by('active', 'task')
 
                 if tasks.count() > 0:
                     context = {
@@ -51,6 +51,10 @@ class Command(BaseCommand):
 
                         if fetch_request.status_code >= 200 and fetch_request.status_code < 300:
                             task_url = fetch_request.json()['link']
+
+                        if task.slug == 'upload-amazon-final':
+                            task.task = 'Update your Amazon order history'
+                            task.save()
 
                         context['tasks'].append({
                             'slug': task.slug,
