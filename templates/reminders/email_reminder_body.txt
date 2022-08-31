@@ -1,6 +1,6 @@
 Dear Webmunk Study Participant,
 
-This email contains the next steps required to complete the study and earn your first $10 gift card. As a reminder, your Webmunk ID is {{ identifier }} and you can always access the Webmunk extension in the top right corner of the browser. Please complete the {{ tasks.count }} task(s) below to receive your payment.
+This email contains the next steps required to complete the study and receive your compensation. As a reminder, your Webmunk ID is {{ identifier }} and you can always access the Webmunk extension in the top right corner of the browser. Please complete the {{ tasks.count }} task(s) below to receive your payment.
 
 {% for task in tasks %}{{ forloop.counter }}. {{ task.name }}: 
 {{ task.url }}

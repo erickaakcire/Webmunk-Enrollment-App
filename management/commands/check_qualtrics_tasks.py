@@ -7,6 +7,7 @@ import json
 import time
 import zipfile
 
+import arrow
 import requests
 
 from django.conf import settings
@@ -29,25 +30,14 @@ class Command(BaseCommand):
     def handle(self, *args, **options): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
         now = timezone.now()
 
-        start_final_window = now - datetime.timedelta(days=70)
+        # start_final_window = now - datetime.timedelta(days=70)
         end_final_window = now - datetime.timedelta(days=42)
-
-        survey_expires = now - (end_final_window - start_final_window)
 
         for enrollment in Enrollment.objects.filter(enrolled__lt=end_final_window):
             if ScheduledTask.objects.filter(enrollment=enrollment, slug='qualtrics-final').count() == 0:
                 final_url = 'https://hbs.qualtrics.com/jfe/form/SV_6mObnu4EcTzvE0K?webmunk_id=%s' % enrollment.assigned_identifier
 
                 ScheduledTask.objects.create(enrollment=enrollment, active=now, task='Complete final survey', slug='qualtrics-final', url=final_url)
-
-        for incomplete in ScheduledTask.objects.filter(slug='qualtrics-final', completed=None, active__lt=survey_expires):
-            metadata = json.loads(incomplete.metadata)
-            metadata['summary'] = 'Survey expired'
-
-            incomplete.metadata = json.dumps(metadata, indent=2)
-            incomplete.completed = now
-
-            incomplete.save()
 
         pending_tasks = ScheduledTask.objects.filter(completed=None, active__lte=now, slug__startswith='qualtrics')
         pending_tasks.update(last_check=now)
@@ -114,14 +104,22 @@ class Command(BaseCommand):
                                                 response_file = json.load(export_file)
 
                                                 for survey_response in response_file.get('responses', []):
-                                                    webmunk_id = survey_response.get('values', {}).get('webmunk_id', None)
+                                                    if survey_response.get('values', {}).get('finished', 0) == 1:
+                                                        webmunk_id = survey_response.get('values', {}).get('webmunk_id', None)
 
-                                                    if webmunk_id is not None:
-                                                        enrollment = Enrollment.objects.filter(assigned_identifier=webmunk_id).first()
+                                                        if webmunk_id is not None:
+                                                            enrollment = Enrollment.objects.filter(assigned_identifier=webmunk_id).first()
 
-                                                        if enrollment is not None:
-                                                            enrollment.tasks.filter(completed=None, active__lte=now, slug=survey_id[1]).update(completed=now)
+                                                            if enrollment is not None:
+                                                                recorded = survey_response.get('values', {}).get('recordedDate', None)
 
-                                                            print('FINISHED %s -- %s' % (webmunk_id, survey_id[1]))
+                                                                if recorded is not None:
+                                                                    completed_date = arrow.get(recorded).datetime
+
+                                                                    enrollment.tasks.filter(completed=None, active__lte=now, slug=survey_id[1]).update(completed=completed_date)
+
+                                                                    enrollment.tasks.filter(completed__lt=completed_date, active__lte=now, slug=survey_id[1]).update(completed=completed_date)
+
+                                                                    print('FINISHED %s -- %s -- %s' % (webmunk_id, survey_id[1], completed_date.isoformat()))
                 else:
                     print('START NON-200 HTTP CODE: %d -- %s: %s' % (response.status_code, start_url, response.text))

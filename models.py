@@ -165,7 +165,9 @@ class ScheduledTask(models.Model):
 
         try:
             if settings.WEBMUNK_CHECK_TASK_COMPLETE(self):
-                self.completed = now
+                if self.completed is None:
+                    self.completed = now
+
                 self.save()
 
                 return True
