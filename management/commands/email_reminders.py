@@ -47,7 +47,7 @@ class Command(BaseCommand):
 
                         fetch_url = 'https://api-ssl.bitly.com/v4/shorten'
 
-                        fetch_request = requests.post(fetch_url, headers=headers, json=post_data)
+                        fetch_request = requests.post(fetch_url, headers=headers, json=post_data, timeout=300)
 
                         if fetch_request.status_code >= 200 and fetch_request.status_code < 300:
                             task_url = fetch_request.json()['link']

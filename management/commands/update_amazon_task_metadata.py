@@ -55,7 +55,7 @@ class Command(BaseCommand):
                     amazon_divider = task.enrollment.enrolled + datetime.timedelta(days=settings.WEBMUNK_DATA_FOLLOWUP_DAYS)
 
                     try:
-                        response = requests.get(pdk_ed_url)
+                        response = requests.get(pdk_ed_url, timeout=300)
 
                         if response.status_code == 200:
                             uploaded_items = response.json()

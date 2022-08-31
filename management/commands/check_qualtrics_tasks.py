@@ -54,7 +54,7 @@ class Command(BaseCommand):
                     'X-API-TOKEN':  survey_id[3]
                 }
 
-                response = requests.post(start_url, data=json.dumps(data), headers=headers)
+                response = requests.post(start_url, data=json.dumps(data), headers=headers, timeout=300)
 
                 if response.status_code == 200:
                     response_json = response.json()
@@ -76,7 +76,7 @@ class Command(BaseCommand):
                         while status == 'inProgress':
                             time.sleep(15)
 
-                            progress_response = requests.get(progress_url, headers=headers)
+                            progress_response = requests.get(progress_url, headers=headers, timeout=300)
 
                             if progress_response.status_code == 200:
                                 progress_json = progress_response.json()
@@ -94,7 +94,7 @@ class Command(BaseCommand):
                                 'X-API-TOKEN':  survey_id[3]
                             }
 
-                            file_response = requests.get(download_url, headers=headers)
+                            file_response = requests.get(download_url, headers=headers, timeout=300)
 
                             with io.BytesIO(file_response.content) as zip_in:
                                 with zipfile.ZipFile(zip_in) as zip_file:
