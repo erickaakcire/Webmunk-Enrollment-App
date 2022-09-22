@@ -26,3 +26,9 @@ def fetch_completed_task(enrollment, slug):
         return mark_safe(value) # nosec
 
     return ''
+
+@register.filter(name='fetch_metadata')
+def fetch_metadata(enrollment, key):
+    metadata = enrollment.fetch_metadata()
+
+    return metadata.get(key, None)

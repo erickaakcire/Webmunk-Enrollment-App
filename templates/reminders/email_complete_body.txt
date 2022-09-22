@@ -1,0 +1,22 @@
+Dear Webmunk Study Participant,
+
+You can now remove Webmunk from your computer. This ensures that we stop tracking your online shopping behavior.
+
+Here's how you can remove Webmunk:
+
+1. Use Chrome and go to 
+
+	https://chrome.google.com/webstore/detail/webmunk/koijebmgmlpeinmgdfogdoflpjfigcmi
+
+2. Click "Remove from Chrome".
+
+3. Confirm by clicking "Remove" on the pop up window appearing on the top right corner of your browser.
+
+You are all set.
+
+If you have trouble removing Webmunk from your browser, please email us at webmunk_study@hbs.edu.
+
+
+Thank you!
+
+The Webmunk Team

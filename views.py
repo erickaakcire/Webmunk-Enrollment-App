@@ -143,6 +143,7 @@ def enrollments_txt(request): # pylint: disable=unused-argument, too-many-branch
         'Original ID',
         'Rule Set',
         'Enrolled',
+        'History Since',
         'Last Updated',
         'Latest Data Point',
         'Uninstalled',
@@ -166,6 +167,10 @@ def enrollments_txt(request): # pylint: disable=unused-argument, too-many-branch
         enrollment_values.append(str(enrollment.rule_set))
 
         enrollment_values.append(enrollment.enrolled.astimezone(here_tz).strftime('%Y-%m-%d %H:%M'))
+
+        metadata = enrollment.fetch_metadata()
+
+        enrollment_values.append(metadata.get('amazon_start', ''))
 
         if enrollment.last_fetched is not None:
             enrollment_values.append(enrollment.last_fetched.astimezone(here_tz).strftime('%Y-%m-%d %H:%M'))

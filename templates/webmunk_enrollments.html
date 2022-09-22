@@ -66,6 +66,7 @@
 						<th scope="col" data-sortable="true">Original ID</th>
 						<th scope="col" data-sortable="true">Rule Set</th>
 						<th scope="col" data-sortable="true">Enrolled</th>
+						<th scope="col" data-sortable="true">History Since</th>
 						<th scope="col" data-sortable="true">Last Updated</th>
 						<th scope="col" data-sortable="true">Latest Data Point</th>
 						<th scope="col" data-sortable="true">Uninstalled</th>
@@ -82,6 +83,7 @@
 							<td>{{ enrollment.current_raw_identifier }}</td>
 							<td>{{ enrollment.rule_set }}</td>
 							<td>{{ enrollment.enrolled|localtime|date:'Y-m-d H:i' }}</td>
+							<td>{{ enrollment|fetch_metadata:'amazon_start' }}</td>
 							<td>{{ enrollment.last_fetched|localtime|date:'Y-m-d H:i' }}</td>
 							{% if enrollment.latest_data_point %}
 								<td>{{ enrollment.latest_data_point|localtime|date:'Y-m-d H:i' }}</td>

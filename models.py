@@ -133,6 +133,10 @@ class Enrollment(models.Model):
 
         return self.raw_identifier
 
+    def fetch_metadata(self):
+        return json.loads(self.metadata)
+
+
 @python_2_unicode_compatible
 class ScheduledTask(models.Model):
     enrollment = models.ForeignKey(Enrollment, related_name='tasks', on_delete=models.CASCADE)
