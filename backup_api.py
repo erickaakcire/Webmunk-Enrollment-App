@@ -19,6 +19,7 @@ def incremental_backup(parameters):
 
     dumpdata_apps = (
         'enrollment.Enrollment',
+        'enrollment.EnrollmentGroup',
         'enrollment.ExtensionRuleSet',
         # 'enrollment.RuleMatchCount',
         'enrollment.ScheduledTask',
