@@ -14,7 +14,7 @@ from django.shortcuts import render
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
-from .models import Enrollment, ExtensionRuleSet, ScheduledTask
+from .models import Enrollment, EnrollmentGroup, ExtensionRuleSet, ScheduledTask
 
 @csrf_exempt
 def enroll(request): # pylint: disable=too-many-branches
@@ -117,7 +117,8 @@ def uninstall(request): # pylint: disable=too-many-branches
 @staff_member_required
 def enrollments(request):
     context = {
-        'enrollments': Enrollment.objects.all().order_by('-enrolled')
+        'enrollments': Enrollment.objects.all().order_by('-enrolled'),
+        'groups': EnrollmentGroup.objects.all().order_by('name'),
     }
 
     return render(request, 'webmunk_enrollments.html', context=context)
@@ -131,6 +132,25 @@ def unsubscribe_reminders(request, identifier):
 
     return render(request, 'webmunk_unsubscribe_reminders.html', context=context)
 
+def update_group(request):
+    payload = {
+        'message': 'Group not updated.'
+    }
+
+    if request.method == 'POST':
+        identifier = request.POST.get('identifier', None)
+        group = request.POST.get('group', None)
+
+        enrollment = Enrollment.objects.filter(assigned_identifier=identifier).first()
+        group = EnrollmentGroup.objects.filter(name=group).first()
+
+        if enrollment is not None:
+            enrollment.group = group
+            enrollment.save()
+
+            payload['message'] = 'New group for %s: %s' % (enrollment, group)
+
+    return HttpResponse(json.dumps(payload, indent=2), content_type='application/json', status=200)
 
 @staff_member_required
 def enrollments_txt(request): # pylint: disable=unused-argument, too-many-branches, too-many-statements

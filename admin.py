@@ -4,14 +4,20 @@ from django.contrib.gis import admin
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 
-from .models import Enrollment, ExtensionRuleSet, ScheduledTask, RuleMatchCount, PageContent
+from .models import Enrollment, EnrollmentGroup, ExtensionRuleSet, ScheduledTask, RuleMatchCount, PageContent
 
 @admin.register(Enrollment)
 class EnrollmentAdmin(admin.OSMGeoAdmin):
-    list_display = ('assigned_identifier', 'enrolled', 'rule_set', 'last_fetched')
-    list_filter = ('enrolled', 'last_fetched', 'rule_set', )
+    list_display = ('assigned_identifier', 'group', 'enrolled', 'rule_set', 'last_fetched')
+    list_filter = ('group', 'enrolled', 'last_fetched', 'rule_set', )
 
     search_fields = ('assigned_identifier',)
+
+@admin.register(EnrollmentGroup)
+class EnrollmentGroupAdmin(admin.OSMGeoAdmin):
+    list_display = ('name',)
+
+    search_fields = ('name',)
 
 @admin.register(ExtensionRuleSet)
 class ExtensionRuleSetAdmin(admin.OSMGeoAdmin):

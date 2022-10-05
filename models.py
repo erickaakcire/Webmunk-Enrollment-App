@@ -82,9 +82,19 @@ class ExtensionRuleSet(models.Model):
 
 
 @python_2_unicode_compatible
+class EnrollmentGroup(models.Model):
+    name = models.CharField(max_length=(4 * 1024))
+
+    def __str__(self):
+        return str(self.name)
+
+
+@python_2_unicode_compatible
 class Enrollment(models.Model):
     assigned_identifier = models.CharField(max_length=(4 * 1024), default='changeme')
     raw_identifier = models.CharField(max_length=(4 * 1024), default='changeme')
+
+    group = models.ForeignKey(EnrollmentGroup, null=True, blank=True, related_name='members', on_delete=models.SET_NULL)
 
     enrolled = models.DateTimeField()
     last_fetched = models.DateTimeField()

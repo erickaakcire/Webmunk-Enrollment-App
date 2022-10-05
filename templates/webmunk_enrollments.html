@@ -59,10 +59,11 @@
 		</nav>
 
 		<main class="container">
-			<table class="table small" data-toggle="table" data-pagination="true" data-search="true" data-page-list="[10, 25, 50, 100]">
+			<table id="enrollment_table" class="table small" data-toggle="table" data-pagination="true" data-search="true" data-unique-id="identifier" data-page-list="[10, 25, 50, 100]">
 				<thead>
 					<tr>
-						<th scope="col" data-sortable="true">ID</th>
+						<th scope="col" data-sortable="true" data-field="identifier">ID</th>
+						<th scope="col" data-sortable="true" data-field="group" data-formatter="selectFormatter" data-search-formatter="false">Group</th>
 						<th scope="col" data-sortable="true">Original ID</th>
 						<th scope="col" data-sortable="true">Rule Set</th>
 						<th scope="col" data-sortable="true">Enrolled</th>
@@ -80,6 +81,7 @@
 					{% for enrollment in enrollments %}
 						<tr>
 							<th scope="row">{{ enrollment.assigned_identifier }}</th>
+							<td>{{ enrollment.group }}</td>
 							<td>{{ enrollment.current_raw_identifier }}</td>
 							<td>{{ enrollment.rule_set }}</td>
 							<td>{{ enrollment.enrolled|localtime|date:'Y-m-d H:i' }}</td>
@@ -102,6 +104,82 @@
 		</main>
 		<script src="{% static 'enrollment/vendor/js/jquery-3.6.0.min.js' %}" crossorigin="anonymous"></script>
 		<script src="{% static 'enrollment/vendor/js/bootstrap.bundle.min.js' %}" crossorigin="anonymous"></script>
+		
+		<script>
+			function selectFormatter(value, row, index, field) {
+				let returnHtml = '' // '<span>' + value + '</span>'
+				
+				returnHtml += '<select class="form-select form-select-sm group_selector" id="group_' + row.identifier + '" style="width: auto;">'
+				returnHtml += '  <option>(None)</option>'
+									
+				{% for group in groups %}
+					returnHtml += '  <option value="{{ group.name }}"'
+					
+					if ('{{ group.name }}' == value) {
+						returnHtml += ' selected' 
+					}
+					
+					returnHtml += '>{{ group.name }}</option>'
+				{% endfor %}
+
+				returnHtml += '</select>'
+				
+				return returnHtml
+			}
+			
+			function attachListeners() {
+				$('.group_selector').off('change')
+				
+				$('.group_selector').change(function(eventObj) {
+					const selector = $(this)
+					
+					const identifier = selector.attr('id').replace('group_', '')
+					const value = selector.children('option:selected').text()
+					
+					selector.attr('disabled', true)
+
+					$.post({
+						'url': '{% url "update_group" %}', 
+						'data': {
+							'identifier': identifier,
+							'group': value
+						},'headers': {
+							'X-CSRFToken': '{{ csrf_token }}'
+						}, 'success': function(data) {
+						  	$("#enrollment_table").bootstrapTable('updateCellByUniqueId', {
+								id: identifier,
+								field: 'group',
+								value: value,
+								reinit: false
+							})
+							
+							selector.removeAttr('disabled')
+						}
+					})
+				})
+			}
+			
+			$(document).ready(function() {
+				window.setTimeout(attachListeners, 500)
+				
+				$('#enrollment_table').on('load-success.bs.table', function (e, data, status, jqXHR) {
+					window.setTimeout(attachListeners, 500)
+				})
+
+				$('#enrollment_table').on('page-change.bs.table', function (e, number, size) {
+					window.setTimeout(attachListeners, 500)
+				})
+
+				$('#enrollment_table').on('sort.bs.table', function (e, number, size) {
+					window.setTimeout(attachListeners, 500)
+				})
+
+				$('#enrollment_table').on('search.bs.table', function (e, number, size) {
+					window.setTimeout(attachListeners, 500)
+				})
+			})
+
+		</script>
 		<script src="{% static 'enrollment/vendor/js/bootstrap-table.js' %}" crossorigin="anonymous"></script>
 	</body>
 </html>
