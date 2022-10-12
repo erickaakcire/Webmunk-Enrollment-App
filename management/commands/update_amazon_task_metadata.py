@@ -70,6 +70,12 @@ class Command(BaseCommand):
 
                                     if task.slug == 'upload-amazon-final' and item_upload > amazon_divider:
                                         task.completed = item_upload
+
+                                        for amazon_task in amazon_tasks:
+                                            if amazon_task.enrollment == task.enrollment and amazon_task.slug == 'upload-amazon-start' and amazon_task.completed is None:
+                                                amazon_task.completed = item_upload
+                                                amazon_task.save()
+
                                         break
                         else:
                             print('RESP[%s]: %s -- %d' % (task.enrollment.assigned_identifier, pdk_ed_url, response.status_code))

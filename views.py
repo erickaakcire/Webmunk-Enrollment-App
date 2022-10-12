@@ -160,6 +160,7 @@ def enrollments_txt(request): # pylint: disable=unused-argument, too-many-branch
 
     header = [
         'ID',
+        'Group',
         'Original ID',
         'Rule Set',
         'Enrolled',
@@ -183,6 +184,12 @@ def enrollments_txt(request): # pylint: disable=unused-argument, too-many-branch
         enrollment_values = []
 
         enrollment_values.append(enrollment.assigned_identifier)
+
+        if enrollment.group is not None:
+            enrollment_values.append(enrollment.group.name)
+        else:
+            enrollment_values.append('')
+
         enrollment_values.append(enrollment.current_raw_identifier())
         enrollment_values.append(str(enrollment.rule_set))
 
