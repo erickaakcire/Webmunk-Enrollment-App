@@ -6,21 +6,16 @@ from __future__ import print_function
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
-from quicksilver.decorators import handle_lock, handle_schedule, add_qs_arguments
+from quicksilver.decorators import handle_lock
 
 from ...vendor.pdk_client import PDKClient
 
 from ...models import Enrollment, EnrollmentGroup
 
 class Command(BaseCommand):
-    help = 'Adds relevent data point metadata to enrollments.'
-
-    @add_qs_arguments
-    def add_arguments(self, parser):
-        pass
+    help = 'Pulls remote PDK group memberships into local enrollment server'
 
     @handle_lock
-    @handle_schedule
     def handle(self, *args, **options): # pylint: disable=too-many-locals, too-many-branches
         client = PDKClient(site_url=settings.PDK_API_URL, token=settings.PDK_API_TOKEN)
 
