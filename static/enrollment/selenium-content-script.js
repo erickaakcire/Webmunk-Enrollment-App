@@ -31,6 +31,28 @@ $.expr.pseudos.webmunkContainsInsensitive = $.expr.createPseudo(function (query)
   }
 })
 
+$.expr.pseudos.isAmazonProductItem = $.expr.createPseudo(function (parameters) {
+  addSelectors.forEach(function(selector) {
+    $(parameters + selector).attr('data-webmunk-is-amazon-item', 'true')
+  })
+
+  clearSelectors.forEach(function(selector) {
+    $(selector).removeAttr('data-webmunk-is-amazon-item')
+  })
+
+  const items = $('[data-webmunk-is-amazon-item]')
+
+  return function (elem) {
+	const attrValue = $(elem).attr('data-webmunk-is-amazon-item')
+
+	if (attrValue === 'true') {
+	  return true
+	}
+
+	return false
+  }
+})
+
 // jQuery.expr[':'].icontains = function(a, i, m) {
 //  return jQuery(a).text().toUpperCase()
 //      .indexOf(m[3].toUpperCase()) >= 0;
@@ -40,7 +62,7 @@ let counts = {}
 
 window.webmunkRuleMatches.forEach(function (match) {
   const matches = $(document).find(match)
-  
+
   counts[match] = matches.length
 })
 
