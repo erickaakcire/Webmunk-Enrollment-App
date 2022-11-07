@@ -3,17 +3,17 @@
 from __future__ import print_function
 
 import datetime
-import json
+# import json
 import re
 import statistics
 
-import requests
+# import requests
 
 from django.conf import settings
-from django.core.mail import send_mail, EmailMultiAlternatives
+# from django.core.mail import send_mail, EmailMultiAlternatives
 from django.core.management.base import BaseCommand
-from django.template.loader import render_to_string
-from django.urls import reverse
+# from django.template.loader import render_to_string
+# from django.urls import reverse
 from django.utils import timezone
 
 from ...models import RuleMatchCount
@@ -24,7 +24,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         pass
 
-    def handle(self, *args, **options): # pylint: disable=too-many-locals
+    def handle(self, *args, **options): # pylint: disable=too-many-locals, too-many-branches, too-many-statements
         now = timezone.now()
 
         today_start = now - datetime.timedelta(days=1)
@@ -49,7 +49,7 @@ class Command(BaseCommand):
         ok_count = 0
         not_ok_count = 0
 
-        for url in urls:
+        for url in urls: # pylint: disable=too-many-nested-blocks
             url_ok_count = 0
             url_not_ok_count = 0
 
@@ -68,7 +68,7 @@ class Command(BaseCommand):
                         all_counts.append(match_count.matches)
 
                     if len(not_today_counts) > 0:
-                        not_today_sum = sum(not_today_counts)
+                        # not_today_sum = sum(not_today_counts)
                         not_today_mean = statistics.mean(not_today_counts)
                         not_today_mode = statistics.mode(not_today_counts)
 
@@ -76,8 +76,8 @@ class Command(BaseCommand):
 
                         if len(today_counts) > 0:
                             today_sum = sum(today_counts)
-                            today_mean = statistics.mean(today_counts)
-                            today_mode = statistics.mode(today_counts)
+                            # today_mean = statistics.mean(today_counts)
+                            # today_mode = statistics.mode(today_counts)
 
                             if today_sum == 0:
                                 print('%s / %s: %.3f matches today. Other days mean: %.3f, mode: %.3f, last seen: %s, last count: %d' % (url, pattern, today_sum, not_today_mean, not_today_mode, last_seen.checked.date(), last_seen.matches))
@@ -86,13 +86,13 @@ class Command(BaseCommand):
                                 not_ok_count += 1
                             else:
                                 not_today_nonzero_counts = [item for item in not_today_counts if item > 0]
-                                
+
                                 if len(not_today_nonzero_counts) > 1:
                                     not_today_nonzero_mean = statistics.mean(not_today_nonzero_counts)
                                     not_today_nonzero_std = statistics.stdev(not_today_nonzero_counts)
-                            
+
                                     today_nonzero_mean = statistics.mean([item for item in today_counts if item > 0])
-                                
+
                                     if today_nonzero_mean < (not_today_nonzero_mean - (2 * not_today_nonzero_std)):
                                         print('%s / %s: Today (%.3f) less than lower standard deviation bound (%.3f / %.3f)' % (url, pattern, today_nonzero_mean, (not_today_nonzero_mean - not_today_nonzero_std), not_today_nonzero_mean,))
 
