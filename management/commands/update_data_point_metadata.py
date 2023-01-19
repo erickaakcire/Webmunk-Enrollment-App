@@ -3,6 +3,8 @@
 
 import json
 
+import arrow
+
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
@@ -27,9 +29,13 @@ class Command(BaseCommand):
         for enrollment in Enrollment.objects.all():
             metadata = json.loads(enrollment.metadata)
 
-            query = client.query_data_points(page_size=32)
+            last_latest = arrow.get(metadata.get('latest_data_point', 0)).datetime
 
-            last_point = query.filter(source=enrollment.assigned_identifier).order_by('-created').first()
+            query = client.query_data_points(page_size=1)
+
+            last_points = query.filter(source=enrollment.assigned_identifier, created__gt=last_latest)
+
+            last_point = last_points.order_by('-created').first()
 
             if last_point is not None:
                 created = last_point.get('passive-data-metadata', {}).get('pdk_server_created', None)

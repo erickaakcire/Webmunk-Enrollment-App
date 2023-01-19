@@ -114,6 +114,10 @@ def uninstall(request): # pylint: disable=too-many-branches
 
     raise Http404
 
+@csrf_exempt
+def privacy(request): # pylint: disable=too-many-branches
+    return render(request, 'webmunk_privacy.html')
+
 @staff_member_required
 def enrollments(request):
     context = {

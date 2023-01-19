@@ -154,6 +154,8 @@
 							})
 							
 							selector.removeAttr('disabled')
+						}, 'error': function(jqXHR, textStatus, errorThrown) {
+							alert('Unable to update group for ' + identifier + ': ' + errorThrown)
 						}
 					})
 				})

@@ -32,6 +32,24 @@ $.expr.pseudos.webmunkContainsInsensitive = $.expr.createPseudo(function (query)
 })
 
 $.expr.pseudos.isAmazonProductItem = $.expr.createPseudo(function (parameters) {
+  const addSelectors = [
+    '[data-asin!=""][data-asin]', // Element has ASIN
+    // '[data-csa-c-asin!=""][data-csa-c-asin]', // Element has ASIN
+    '.a-carousel-card:has([href*="/dp/"])', // Sponsored links w ASIN in URL: "/dp/ASIN/"
+    '.a-carousel-card:has([href*="/gp/slredirect"])', // Sponsored links w/o ASIN
+    '.a-section:has(.sbv-product-container)', // Product w/ video ad
+    'th.comparison_image_title_cell', // Comparison table
+    'td.comparison_add_to_cart_button', // Comparison table
+    '#ape_Detail_dp-ads-center-promo_Desktop_placement', // Large page ad
+    'div#ad:has([href*="/dp/"])', // 
+    'div#ad:has(picture[data-testid="productImage"])', // 
+  ]
+
+  const clearSelectors = [
+    '#reviews-image-gallery-container', // Review images
+    '[data-video-url]' // Product videos,
+  ]
+
   addSelectors.forEach(function(selector) {
     $(parameters + selector).attr('data-webmunk-is-amazon-item', 'true')
   })
