@@ -43,5 +43,11 @@ class Command(BaseCommand):
                 if created is not None:
                     metadata['latest_data_point'] = created
 
+                    point_count = query.filter(source=enrollment.assigned_identifier).count()
+
+                    metadata['data_point_count'] = point_count
+
+                    print('%s - %s' % (enrollment.assigned_identifier, point_count))
+
                     enrollment.metadata = json.dumps(metadata, indent=2)
                     enrollment.save()

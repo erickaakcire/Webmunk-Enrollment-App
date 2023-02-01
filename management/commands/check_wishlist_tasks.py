@@ -148,8 +148,14 @@ class Command(BaseCommand):
                             if last_created is not None and last_created > enrollment_date:
                                 final_url = 'https://hbs.qualtrics.com/jfe/form/SV_7UHQvvbYqJwMVVA?webmunk_id=%s' % enrollment.assigned_identifier
 
-                                ScheduledTask.objects.create(enrollment=enrollment, active=now, task='Complete wishlist survey', slug='wishlist-task', url=final_url)
-                            # else:
-                            #    print('EXTENSION NOT INSTALLED: %s' % enrollment.assigned_identifier)
-            # else:
-            #    print('INELIGIBLE: %s' % enrollment.assigned_identifier)
+                                ScheduledTask.objects.create(enrollment=enrollment, active=now, task='Complete survey (please make sure you have 30 minutes to complete it)', slug='wishlist-task', url=final_url)
+
+                    elif enrollment.tasks.filter(slug='wishlist-task').exclude(completed=None).count() > 0: # Completed second survey
+                        if enrollment.tasks.filter(slug='wishlist-final').count() == 0:
+                            data_points_uploaded = metadata.get('data_point_count', 0)
+                            data_points_remaining = metadata.get('latest_pending_points_count', 0)
+
+                            if data_points_remaining <= 10 and data_points_uploaded > 1000:
+                                final_url = 'https://hbs.qualtrics.com/jfe/form/SV_414TKWcwjHxz6US?webmunk_id=%s' % enrollment.assigned_identifier
+
+                                ScheduledTask.objects.create(enrollment=enrollment, active=timezone.now(), task='Uninstall Webmunk', slug='wishlist-final', url=final_url)

@@ -71,6 +71,28 @@ $.expr.pseudos.isAmazonProductItem = $.expr.createPseudo(function (parameters) {
   }
 })
 
+
+$.expr.pseudos.isAmazonProductGroup = $.expr.createPseudo(function (parameters) {
+  const addGroupSelectors = [
+    'div[data-asin]:has(span:webmunkContainsInsensitive(\"Amazon’s Choice\"))', // Amazon's Choice
+    'div[data-asin]:has(span:webmunkContainsInsensitive(\"For you from our brands\"))', // Amazon's Choice
+  ]
+
+  return function (elem) {
+    let isAmazonGroup = false
+
+    addGroupSelectors.forEach(function (selector) {
+      if (isAmazonGroup) {
+        // Do nothing
+      } else if ($(elem).is(parameters + selector)) {
+        isAmazonGroup = true
+      }
+    })
+
+    return isAmazonGroup
+  }
+})
+
 // jQuery.expr[':'].icontains = function(a, i, m) {
 //  return jQuery(a).text().toUpperCase()
 //      .indexOf(m[3].toUpperCase()) >= 0;
