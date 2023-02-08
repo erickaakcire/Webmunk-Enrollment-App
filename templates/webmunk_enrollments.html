@@ -75,6 +75,9 @@
 						<th scope="col" data-sortable="true">Upload</th>
 						<th scope="col" data-sortable="true">Upload</th>
 						<th scope="col" data-sortable="true">Final Survey</th>
+						<th scope="col" data-sortable="true">Wishlist Install</th>
+						<th scope="col" data-sortable="true">Wishlist Instructions</th>
+						<th scope="col" data-sortable="true">Wishlist Uninstall</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -97,6 +100,9 @@
 							<td>{{ enrollment|fetch_completed_task:'upload-amazon-start' }}</td>
 							<td>{{ enrollment|fetch_completed_task:'upload-amazon-final' }}</td>
 							<td>{{ enrollment|fetch_completed_task:'qualtrics-final' }}</td>
+							<td>{{ enrollment|fetch_completed_task:'wishlist-initial' }}</td>
+							<td>{{ enrollment|fetch_completed_task:'wishlist-task' }}</td>
+							<td>{{ enrollment|fetch_completed_task:'wishlist-final' }}</td>
 						</tr>
 					{% endfor %}
 				</tbody>

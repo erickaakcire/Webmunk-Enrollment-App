@@ -103,7 +103,7 @@ class Command(BaseCommand):
                                             with zip_file.open(name) as export_file:
                                                 response_file = json.load(export_file)
 
-                                                for survey_response in response_file.get('responses', []):
+                                                for survey_response in response_file.get('responses', []): # pylint: disable=too-many-nested-blocks
                                                     if survey_response.get('values', {}).get('finished', 0) == 1:
                                                         webmunk_id = survey_response.get('values', {}).get('webmunk_id', None)
 
@@ -116,10 +116,15 @@ class Command(BaseCommand):
                                                                 if recorded is not None:
                                                                     completed_date = arrow.get(recorded).datetime
 
-                                                                    enrollment.tasks.filter(completed=None, active__lte=now, slug=survey_id[1]).update(completed=completed_date)
+                                                                    if enrollment.tasks.filter(slug=survey_id[1]).count() > 0:
+                                                                        enrollment.tasks.filter(completed=None, active__lte=now, slug=survey_id[1]).update(completed=completed_date)
 
-                                                                    enrollment.tasks.filter(completed__lt=completed_date, active__lte=now, slug=survey_id[1]).update(completed=completed_date)
+                                                                        enrollment.tasks.filter(completed__lt=completed_date, active__lte=now, slug=survey_id[1]).update(completed=completed_date)
 
-                                                                    print('FINISHED %s -- %s -- %s' % (webmunk_id, survey_id[1], completed_date.isoformat()))
+                                                                        print('FINISHED %s -- %s -- %s' % (webmunk_id, survey_id[1], completed_date.isoformat()))
+                                                                    else:
+                                                                        task_name = 'Qualtrics (%s)' % survey_id[1]
+
+                                                                        ScheduledTask.objects.create(enrollment=enrollment, slug=survey_id[1], task=task_name, completed=completed_date, active=now, last_check=now)
                 else:
                     print('START NON-200 HTTP CODE: %d -- %s: %s' % (response.status_code, start_url, response.text))

@@ -178,6 +178,9 @@ def enrollments_txt(request): # pylint: disable=unused-argument, too-many-branch
         'Final Amazon History Uploaded',
         'Final Amazon Upload Count',
         'Final Survey Completed',
+        'Wishlist Install',
+        'Wishlist Instructions',
+        'Wishlist Uninstall',
     ]
 
     here_tz = pytz.timezone(settings.TIME_ZONE)
@@ -263,6 +266,27 @@ def enrollments_txt(request): # pylint: disable=unused-argument, too-many-branch
             enrollment_values.append('')
 
         task = enrollment.tasks.filter(slug='qualtrics-final').exclude(completed=None).first()
+
+        if task is not None:
+            enrollment_values.append(task.completed.astimezone(here_tz).strftime('%Y-%m-%d %H:%M'))
+        else:
+            enrollment_values.append('')
+
+        task = enrollment.tasks.filter(slug='wishlist-initial').exclude(completed=None).first()
+
+        if task is not None:
+            enrollment_values.append(task.completed.astimezone(here_tz).strftime('%Y-%m-%d %H:%M'))
+        else:
+            enrollment_values.append('')
+
+        task = enrollment.tasks.filter(slug='wishlist-task').exclude(completed=None).first()
+
+        if task is not None:
+            enrollment_values.append(task.completed.astimezone(here_tz).strftime('%Y-%m-%d %H:%M'))
+        else:
+            enrollment_values.append('')
+
+        task = enrollment.tasks.filter(slug='wishlist-final').exclude(completed=None).first()
 
         if task is not None:
             enrollment_values.append(task.completed.astimezone(here_tz).strftime('%Y-%m-%d %H:%M'))
