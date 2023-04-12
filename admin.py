@@ -3,6 +3,7 @@
 from django.contrib.gis import admin
 from django.urls import reverse
 from django.utils.safestring import mark_safe
+from django.utils import timezone
 
 from .models import Enrollment, EnrollmentGroup, ExtensionRuleSet, ScheduledTask, RuleMatchCount, PageContent
 
@@ -31,13 +32,18 @@ def reset_scheduled_task_completions(modeladmin, request, queryset): # pylint: d
 
 reset_scheduled_task_completions.description = 'Reset scheduled task completions'
 
+def complete_scheduled_tasks(modeladmin, request, queryset): # pylint: disable=unused-argument, invalid-name
+    queryset.update(completed=timezone.now())
+
+complete_scheduled_tasks.description = 'Mark selected tasks as completed'
+
 @admin.register(ScheduledTask)
 class ScheduledTaskAdmin(admin.OSMGeoAdmin):
     list_display = ('enrollment', 'slug', 'task', 'active', 'last_check', 'completed')
     list_filter = ('active', 'completed', 'last_check', 'slug',)
 
     search_fields = ('task', 'slug', 'url',)
-    actions = [reset_scheduled_task_completions]
+    actions = [reset_scheduled_task_completions, complete_scheduled_tasks]
 
 @admin.register(RuleMatchCount)
 class RuleMatchCountAdmin(admin.OSMGeoAdmin):

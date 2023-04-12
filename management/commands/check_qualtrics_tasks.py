@@ -12,6 +12,7 @@ import requests
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
+from django.db.models import Q
 from django.utils import timezone
 
 from quicksilver.decorators import handle_lock, handle_schedule, add_qs_arguments
@@ -39,7 +40,11 @@ class Command(BaseCommand):
 
                 ScheduledTask.objects.create(enrollment=enrollment, active=now, task='Complete final survey', slug='qualtrics-final', url=final_url)
 
-        pending_tasks = ScheduledTask.objects.filter(completed=None, active__lte=now, slug__startswith='qualtrics')
+        query = Q(completed=None, active__lte=now)
+
+        query = query & (Q(slug__startswith='qualtrics') | Q(slug='wishlist-task'))
+
+        pending_tasks = ScheduledTask.objects.filter(query)
         pending_tasks.update(last_check=now)
 
         if pending_tasks.count() > 0: # pylint: disable=too-many-nested-blocks
@@ -70,8 +75,6 @@ class Command(BaseCommand):
 
                         status = 'inProgress'
                         file_id = None
-
-                        print('STATUS: %s' % status)
 
                         while status == 'inProgress':
                             time.sleep(15)
@@ -120,8 +123,6 @@ class Command(BaseCommand):
                                                                         enrollment.tasks.filter(completed=None, active__lte=now, slug=survey_id[1]).update(completed=completed_date)
 
                                                                         enrollment.tasks.filter(completed__lt=completed_date, active__lte=now, slug=survey_id[1]).update(completed=completed_date)
-
-                                                                        print('FINISHED %s -- %s -- %s' % (webmunk_id, survey_id[1], completed_date.isoformat()))
                                                                     else:
                                                                         task_name = 'Qualtrics (%s)' % survey_id[1]
 

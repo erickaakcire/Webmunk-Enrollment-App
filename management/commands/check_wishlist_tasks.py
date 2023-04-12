@@ -112,7 +112,7 @@ class Command(BaseCommand):
             else:
                 print('START NON-200 HTTP CODE: %d -- %s: %s' % (response.status_code, start_url, response.text))
 
-        only_before = arrow.get('2022-11-01T00:00:00+00:00') # Chiara picked this date!
+        only_before = arrow.get('2023-03-01T00:00:00+00:00') # Chiara picked this date!
 
         client = PDKClient(site_url=settings.PDK_API_URL, token=settings.PDK_API_TOKEN)
 
