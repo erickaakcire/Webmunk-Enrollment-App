@@ -133,7 +133,7 @@ class Command(BaseCommand):
 
             #  "wishlist_ineligible": true,
 
-            if metadata.get('wishlist_ineligible', False) is False:
+            if metadata.get('wishlist_ineligible', True) is False:
                 if metadata.get('wishlist_enrolled', None) is not None:
                     if ScheduledTask.objects.filter(enrollment=enrollment, slug='wishlist-task').count() == 0:
                         query = client.query_data_points(page_size=32)

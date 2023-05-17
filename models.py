@@ -1,4 +1,4 @@
-# pylint: disable=line-too-long, no-member
+# pylint: disable=line-too-long, no-member, too-few-public-methods
 
 import base64
 import datetime
@@ -68,6 +68,9 @@ def generate_unique_identifier():
 
 @python_2_unicode_compatible
 class ExtensionRuleSet(models.Model):
+    class Meta:
+        ordering = ['name']
+
     name = models.CharField(max_length=1024)
     is_active = models.BooleanField(default=True)
     is_default = models.BooleanField(default=False)
@@ -83,6 +86,9 @@ class ExtensionRuleSet(models.Model):
 
 @python_2_unicode_compatible
 class EnrollmentGroup(models.Model):
+    class Meta:
+        ordering = ['name']
+
     name = models.CharField(max_length=(4 * 1024))
 
     def __str__(self):
@@ -91,7 +97,10 @@ class EnrollmentGroup(models.Model):
 
 @python_2_unicode_compatible
 class Enrollment(models.Model):
-    assigned_identifier = models.CharField(max_length=(4 * 1024), default='changeme')
+    class Meta:
+        ordering = ['assigned_identifier']
+
+    assigned_identifier = models.CharField(max_length=(4 * 1024), default='changeme', verbose_name='Identifier')
     raw_identifier = models.CharField(max_length=(4 * 1024), default='changeme')
 
     group = models.ForeignKey(EnrollmentGroup, null=True, blank=True, related_name='members', on_delete=models.SET_NULL)
@@ -120,6 +129,29 @@ class Enrollment(models.Model):
 
     def __str__(self):
         return str(self.assigned_identifier)
+
+    def issues(self):
+        open_task_urls = []
+
+        issues = []
+
+        now = timezone.now()
+
+        for task in self.tasks.filter(active__lte=now, completed=None):
+            if task.url in open_task_urls and ('identical-tasks' in issues) is False:
+                issues.append('identical-tasks')
+            else:
+                open_task_urls.append(task.url)
+
+        if len(issues) == 0:
+            return None
+
+        issue_descriptions = []
+
+        if 'identical-tasks' in issues:
+            issue_descriptions.append('identical active tasks')
+
+        return ';'.join(issue_descriptions)
 
     def assign_random_identifier(self, raw_identifier):
         if raw_identifier == self.current_raw_identifier():
@@ -161,6 +193,9 @@ class ScheduledTask(models.Model):
     completed = models.DateTimeField(null=True, blank=True)
 
     metadata = models.TextField(max_length=(16 * 1024 * 1024), default='{}')
+
+    def __str__(self):
+        return '%s (%s)' % (self.task, self.slug)
 
     def fetch_metadata(self):
         return json.loads(self.metadata)

@@ -1,5 +1,6 @@
 # pylint: disable=no-member, line-too-long
 
+from django.contrib.admin.filters import RelatedFieldListFilter, AllValuesFieldListFilter
 from django.contrib.gis import admin
 from django.urls import reverse
 from django.utils.safestring import mark_safe
@@ -7,12 +8,38 @@ from django.utils import timezone
 
 from .models import Enrollment, EnrollmentGroup, ExtensionRuleSet, ScheduledTask, RuleMatchCount, PageContent
 
+class DropdownRelatedFilter(RelatedFieldListFilter):
+    template = 'admin/enrollment_task_enrollment_dropdown_filter.html'
+
+class DropdownSlugListFilter(AllValuesFieldListFilter):
+    template = 'admin/enrollment_task_enrollment_dropdown_filter.html'
+
+class ScheduledTaskInline(admin.TabularInline):
+    model = ScheduledTask
+
+    fields = ['task', 'slug', 'active', 'completed', 'last_check']
+
+    show_change_link = True
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_add_permission(self, request, obj=None): # pylint: disable=arguments-differ,unused-argument
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
 @admin.register(Enrollment)
 class EnrollmentAdmin(admin.OSMGeoAdmin):
-    list_display = ('assigned_identifier', 'group', 'enrolled', 'rule_set', 'last_fetched')
+    list_display = ('assigned_identifier', 'group', 'enrolled', 'rule_set', 'issues', 'last_fetched')
     list_filter = ('group', 'enrolled', 'last_fetched', 'rule_set', )
 
     search_fields = ('assigned_identifier',)
+
+    inlines = [
+        ScheduledTaskInline,
+    ]
 
 @admin.register(EnrollmentGroup)
 class EnrollmentGroupAdmin(admin.OSMGeoAdmin):
@@ -40,7 +67,7 @@ complete_scheduled_tasks.description = 'Mark selected tasks as completed'
 @admin.register(ScheduledTask)
 class ScheduledTaskAdmin(admin.OSMGeoAdmin):
     list_display = ('enrollment', 'slug', 'task', 'active', 'last_check', 'completed')
-    list_filter = ('active', 'completed', 'last_check', 'slug',)
+    list_filter = ('active', 'completed', 'last_check', ('slug', DropdownSlugListFilter), ('enrollment', DropdownRelatedFilter))
 
     search_fields = ('task', 'slug', 'url',)
     actions = [reset_scheduled_task_completions, complete_scheduled_tasks]

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=no-member,line-too-long
 
-import datetime
 import io
 import json
 import time
@@ -32,13 +31,13 @@ class Command(BaseCommand):
         now = timezone.now()
 
         # start_final_window = now - datetime.timedelta(days=70)
-        end_final_window = now - datetime.timedelta(days=42)
+        # end_final_window = now - datetime.timedelta(days=42)
 
-        for enrollment in Enrollment.objects.filter(enrolled__lt=end_final_window):
-            if ScheduledTask.objects.filter(enrollment=enrollment, slug='qualtrics-final').count() == 0:
-                final_url = 'https://hbs.qualtrics.com/jfe/form/SV_6mObnu4EcTzvE0K?webmunk_id=%s' % enrollment.assigned_identifier
-
-                ScheduledTask.objects.create(enrollment=enrollment, active=now, task='Complete final survey', slug='qualtrics-final', url=final_url)
+        # for enrollment in Enrollment.objects.filter(enrolled__lt=end_final_window):
+        #    if ScheduledTask.objects.filter(enrollment=enrollment, slug='qualtrics-final').count() == 0:
+        #        final_url = 'https://hbs.qualtrics.com/jfe/form/SV_6mObnu4EcTzvE0K?webmunk_id=%s' % enrollment.assigned_identifier
+        #
+        #        ScheduledTask.objects.create(enrollment=enrollment, active=now, task='Complete final survey', slug='qualtrics-final', url=final_url)
 
         query = Q(completed=None, active__lte=now)
 

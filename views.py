@@ -115,6 +115,50 @@ def uninstall(request): # pylint: disable=too-many-branches
     raise Http404
 
 @csrf_exempt
+def amazon_fetched(request): # pylint: disable=too-many-branches
+    raw_identifier = request.POST.get('identifier', request.GET.get('identifier', None))
+
+    payload = {
+        'updated': 0
+    }
+
+    if raw_identifier is not None:
+        now = timezone.now()
+
+        for enrollment in Enrollment.objects.all():
+            if raw_identifier in (enrollment.current_raw_identifier(), enrollment.assigned_identifier,):
+                payload['updated'] += enrollment.tasks.filter(slug='amazon-fetch', completed=None, active__lte=now).update(completed=now)
+
+                if enrollment.tasks.filter(slug='amazon-fetch').exclude(completed=None).count() > 1 and enrollment.tasks.filter(slug='main-survey-final').count() == 0:
+                    survey_url = 'https://hbs.qualtrics.com/jfe/form/SV_37xQ9ZpbqC75UVg?webmunk_id=%s' % enrollment.assigned_identifier
+
+                    ScheduledTask.objects.create(enrollment=enrollment, active=now, task='Complete Survey', slug='main-survey-final', url=survey_url)
+
+    return HttpResponse(json.dumps(payload, indent=2), content_type='application/json', status=200)
+
+@csrf_exempt
+def mark_eligible(request): # pylint: disable=too-many-branches
+    raw_identifier = request.POST.get('identifier', request.GET.get('identifier', None))
+
+    if raw_identifier is not None:
+        now = timezone.now()
+
+        for enrollment in Enrollment.objects.all():
+            if raw_identifier in (enrollment.current_raw_identifier(), enrollment.assigned_identifier,):
+                metadata = enrollment.fetch_metadata()
+
+                is_eligible = metadata.get('is_eligible', False)
+
+                if is_eligible is False:
+                    metadata['is_eligible'] = now.isoformat()
+
+                    enrollment.metadata = json.dumps(metadata, indent=2)
+                    enrollment.save()
+
+    return render(request, 'webmunk_eligible.html')
+
+
+@csrf_exempt
 def privacy(request): # pylint: disable=too-many-branches
     return render(request, 'webmunk_privacy.html')
 
