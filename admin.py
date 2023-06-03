@@ -6,7 +6,7 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils import timezone
 
-from .models import Enrollment, EnrollmentGroup, ExtensionRuleSet, ScheduledTask, RuleMatchCount, PageContent
+from .models import Enrollment, EnrollmentGroup, ExtensionRuleSet, ScheduledTask, RuleMatchCount, PageContent, ArchivedExtensionRuleSet
 
 class DropdownRelatedFilter(RelatedFieldListFilter):
     template = 'admin/enrollment_task_enrollment_dropdown_filter.html'
@@ -53,6 +53,13 @@ class ExtensionRuleSetAdmin(admin.OSMGeoAdmin):
     list_filter = ('is_active', 'is_default',)
 
     search_fields = ('name', 'rule_json')
+
+@admin.register(ArchivedExtensionRuleSet)
+class ArchivedExtensionRuleSetAdmin(admin.OSMGeoAdmin):
+    list_display = ('rule_set', 'active_until',)
+    list_filter = ('active_until', 'rule_set',)
+
+    search_fields = ('rule_set__name', 'rule_json')
 
 def reset_scheduled_task_completions(modeladmin, request, queryset): # pylint: disable=unused-argument, invalid-name
     queryset.update(completed=None)

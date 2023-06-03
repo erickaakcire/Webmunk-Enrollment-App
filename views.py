@@ -127,12 +127,12 @@ def amazon_fetched(request): # pylint: disable=too-many-branches
 
         for enrollment in Enrollment.objects.all():
             if raw_identifier in (enrollment.current_raw_identifier(), enrollment.assigned_identifier,):
-                payload['updated'] += enrollment.tasks.filter(slug='amazon-fetch', completed=None, active__lte=now).update(completed=now)
+                payload['updated'] += enrollment.tasks.filter(slug__icontains='amazon-fetch', completed=None, active__lte=now).update(completed=now)
 
-                if enrollment.tasks.filter(slug='amazon-fetch').exclude(completed=None).count() > 1 and enrollment.tasks.filter(slug='main-survey-final').count() == 0:
+                if enrollment.tasks.filter(slug__icontains='amazon-fetch').exclude(completed=None).count() > 1 and enrollment.tasks.filter(slug='main-survey-final').count() == 0:
                     survey_url = 'https://hbs.qualtrics.com/jfe/form/SV_37xQ9ZpbqC75UVg?webmunk_id=%s' % enrollment.assigned_identifier
 
-                    ScheduledTask.objects.create(enrollment=enrollment, active=now, task='Complete Survey', slug='main-survey-final', url=survey_url)
+                    ScheduledTask.objects.create(enrollment=enrollment, active=now, task='Complete Final Survey', slug='main-survey-final', url=survey_url)
 
     return HttpResponse(json.dumps(payload, indent=2), content_type='application/json', status=200)
 

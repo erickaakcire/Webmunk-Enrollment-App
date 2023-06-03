@@ -13,6 +13,8 @@ from six import python_2_unicode_compatible
 
 from django.conf import settings
 from django.contrib.gis.db import models
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
 from django.utils import timezone
 from django.utils.encoding import smart_str
 
@@ -83,6 +85,26 @@ class ExtensionRuleSet(models.Model):
     def rules(self):
         return json.loads(self.rule_json)
 
+@python_2_unicode_compatible
+class ArchivedExtensionRuleSet(models.Model):
+    class Meta:
+        ordering = ['-active_until']
+
+    rule_set = models.ForeignKey(ExtensionRuleSet, related_name='previous_versions', on_delete=models.CASCADE)
+
+    rule_json = models.TextField(max_length=(16 * 1024 * 1024), default='[]')
+
+    active_until = models.DateTimeField()
+
+    def __str__(self):
+        return '%s (%s)' % (self.rule_set, self.active_until)
+
+@receiver(pre_save, sender=ExtensionRuleSet)
+def archive_rule_set(sender, instance, **kwargs): # pylint: disable=unused-argument
+    original_version = ExtensionRuleSet.objects.get(id=instance.id)
+
+    if original_version.rule_json != instance.rule_json:
+        ArchivedExtensionRuleSet.objects.create(rule_set=instance, rule_json=original_version.rule_json, active_until=timezone.now())
 
 @python_2_unicode_compatible
 class EnrollmentGroup(models.Model):
