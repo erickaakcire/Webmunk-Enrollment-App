@@ -98,3 +98,13 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = 'static'
 
+SILENCED_SYSTEM_CHECKS = [
+    'simple_data_export.E002',
+    'simple_data_export.E003',
+    'simple_data_export.E004',
+    'simple_data_export.E005',
+    'simple_backup.W001',
+    'simple_backup.W002',
+    'simple_data_export.W001',
+]
+
