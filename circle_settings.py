@@ -15,7 +15,7 @@ SECRET_KEY = 'foobar' #nosec
 DEBUG = False
 ADMINS = [('Chris Karr', 'chris@audacious-software.com')]
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['test.example.com']
 
 # Application definition
 
