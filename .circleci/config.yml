@@ -46,7 +46,10 @@ jobs:
             cp enrollment/circle_urls.py django_site/urls.py
             git clone https://github.com/audacious-software/Quicksilver-Django.git quicksilver
             git clone https://github.com/audacious-software/Simple-Backup-Django.git simple_backup
+            git clone https://github.com/audacious-software/Simple-Data-Export-Django.git simple_data_export
             pip install -r quicksilver/requirements.txt --progress-bar off
+            pip install -r simple_backup/requirements.txt --progress-bar off
+            pip install -r simple_data_export/requirements.txt --progress-bar off
             python manage.py migrate
             python manage.py test
             cp enrollment/.pylintrc .

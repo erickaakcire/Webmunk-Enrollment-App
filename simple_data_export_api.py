@@ -94,8 +94,6 @@ def compile_data_export(data_type, data_sources, start_time=None, end_time=None,
                             with io.BytesIO(file_response.content) as zip_in:
                                 with zipfile.ZipFile(zip_in) as zip_file:
                                     for name in zip_file.namelist():
-                                        print('NAME: %s' % name)
-
                                         if name.endswith('.tsv'):
                                             with zip_file.open(name) as inner_file:
                                                 export_file.writestr(name, inner_file.read())

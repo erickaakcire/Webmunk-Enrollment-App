@@ -28,6 +28,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'enrollment',
     'simple_backup',
+    'simple_data_export',
     'quicksilver',
 )
 
