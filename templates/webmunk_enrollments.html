@@ -93,7 +93,12 @@
 							<td>{{ enrollment|fetch_metadata:'amazon_start' }}</td>
 							<td>{{ enrollment.last_fetched|localtime|date:'Y-m-d H:i' }}</td>
 							{% if enrollment.latest_data_point %}
-								<td>{{ enrollment.latest_data_point|localtime|date:'Y-m-d H:i' }}</td>
+								<td>
+									{{ enrollment.latest_data_point|localtime|date:'Y-m-d H:i' }}
+									{% if enrollment.latest_data_point %}
+										<br />({{ enrollment.latest_server }})
+									{% endif %}
+								</td>
 							{% else %}
 								<td></td>
 							{% endif %}

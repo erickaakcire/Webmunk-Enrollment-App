@@ -5,6 +5,8 @@ import datetime
 import json
 import random
 
+from urllib.parse import urlparse
+
 import arrow
 import pytz
 
@@ -146,6 +148,18 @@ class Enrollment(models.Model):
             here_tz = pytz.timezone(settings.TIME_ZONE)
 
             return arrow.get(latest).datetime.astimezone(here_tz)
+
+        return None
+
+    def latest_server(self):
+        metadata = json.loads(self.metadata)
+
+        server = metadata.get('data_point_server', None)
+
+        if server is not None:
+            parsed = urlparse(server)
+
+            return parsed.hostname.split('.')[0]
 
         return None
 

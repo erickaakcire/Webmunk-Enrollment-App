@@ -24,30 +24,32 @@ class Command(BaseCommand):
     @handle_lock
     @handle_schedule
     def handle(self, *args, **options): # pylint: disable=too-many-locals, too-many-branches
-        client = PDKClient(site_url=settings.PDK_API_URL, token=settings.PDK_API_TOKEN)
+        for url in settings.PDK_API_URLS:
+            client = PDKClient(site_url=url, token=settings.PDK_API_TOKEN)
 
-        for enrollment in Enrollment.objects.all():
-            metadata = json.loads(enrollment.metadata)
+            for enrollment in Enrollment.objects.all().order_by('assigned_identifier'):
+                metadata = json.loads(enrollment.metadata)
 
-            last_latest = arrow.get(metadata.get('latest_data_point', 0)).datetime
+                last_latest = arrow.get(metadata.get('latest_data_point', 0)).datetime
 
-            query = client.query_data_points(page_size=1)
+                query = client.query_data_points(page_size=1)
 
-            last_points = query.filter(source=enrollment.assigned_identifier, created__gt=last_latest)
+                last_points = query.filter(source=enrollment.assigned_identifier, created__gt=last_latest)
 
-            last_point = last_points.order_by('-created').first()
+                last_point = last_points.order_by('-created').first()
 
-            if last_point is not None:
-                created = last_point.get('passive-data-metadata', {}).get('pdk_server_created', None)
+                if last_point is not None:
+                    created = last_point.get('passive-data-metadata', {}).get('pdk_server_created', None)
 
-                if created is not None:
-                    metadata['latest_data_point'] = created
+                    if created is not None:
+                        metadata['latest_data_point'] = created
 
-                    point_count = query.filter(source=enrollment.assigned_identifier).count()
+                        point_count = query.filter(source=enrollment.assigned_identifier).count()
 
-                    metadata['data_point_count'] = point_count
+                        metadata['data_point_count'] = point_count
+                        metadata['data_point_server'] = url
 
-                    print('%s - %s' % (enrollment.assigned_identifier, point_count))
+                        print('%s - %s (%s)' % (enrollment.assigned_identifier, point_count, url,))
 
-                    enrollment.metadata = json.dumps(metadata, indent=2)
-                    enrollment.save()
+                        enrollment.metadata = json.dumps(metadata, indent=2)
+                        enrollment.save()
