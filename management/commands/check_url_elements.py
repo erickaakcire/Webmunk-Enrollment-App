@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# pylint: disable=no-member,line-too-long
+# pylint: disable=no-member,line-too-long, unexpected-keyword-arg
 
 import base64
 import json
