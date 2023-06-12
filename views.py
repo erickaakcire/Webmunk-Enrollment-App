@@ -1,11 +1,7 @@
 # pylint: disable=line-too-long, no-member
 
-import csv
 import datetime
-import io
 import json
-
-import pytz
 
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
@@ -15,6 +11,7 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
 from .models import Enrollment, EnrollmentGroup, ExtensionRuleSet, ScheduledTask
+from .simple_data_export_api import compile_data_export
 
 @csrf_exempt
 def enroll(request): # pylint: disable=too-many-branches
@@ -202,146 +199,13 @@ def update_group(request):
 
 @staff_member_required
 def enrollments_txt(request): # pylint: disable=unused-argument, too-many-branches, too-many-statements
-    output = io.StringIO()
+    filename = compile_data_export('enrollment.enrollments', [])
 
-    writer = csv.writer(output, delimiter='\t')
+    if filename is not None:
+        with open(filename, 'rb') as open_file:
+            response = HttpResponse(open_file, content_type='text/csv', status=200)
+            response['Content-Disposition'] = 'attachment; filename= "webmunk-enrollments.txt"'
 
-    header = [
-        'ID',
-        'Group',
-        'Original ID',
-        'Rule Set',
-        'Enrolled',
-        'History Since',
-        'Last Updated',
-        'Latest Data Point',
-        'Uninstalled',
-        'Intake Survey Completed',
-        'First Amazon History Uploaded',
-        'First Amazon Upload Count',
-        'Final Amazon History Uploaded',
-        'Final Amazon Upload Count',
-        'Final Survey Completed',
-        'Wishlist Install',
-        'Wishlist Instructions',
-        'Wishlist Uninstall',
-    ]
+            return response
 
-    here_tz = pytz.timezone(settings.TIME_ZONE)
-
-    writer.writerow(header)
-
-    for enrollment in Enrollment.objects.all().order_by('assigned_identifier'):
-        enrollment_values = []
-
-        enrollment_values.append(enrollment.assigned_identifier)
-
-        if enrollment.group is not None:
-            enrollment_values.append(enrollment.group.name)
-        else:
-            enrollment_values.append('')
-
-        enrollment_values.append(enrollment.current_raw_identifier())
-        enrollment_values.append(str(enrollment.rule_set))
-
-        enrollment_values.append(enrollment.enrolled.astimezone(here_tz).strftime('%Y-%m-%d %H:%M'))
-
-        metadata = enrollment.fetch_metadata()
-
-        enrollment_values.append(metadata.get('amazon_start', ''))
-
-        if enrollment.last_fetched is not None:
-            enrollment_values.append(enrollment.last_fetched.astimezone(here_tz).strftime('%Y-%m-%d %H:%M'))
-        else:
-            enrollment_values.append('')
-
-        latest_data_point = enrollment.latest_data_point()
-
-        if latest_data_point is not None:
-            enrollment_values.append(latest_data_point.astimezone(here_tz).strftime('%Y-%m-%d %H:%M'))
-        else:
-            enrollment_values.append('')
-
-        if enrollment.last_uninstalled is not None:
-            enrollment_values.append(enrollment.last_uninstalled.astimezone(here_tz).strftime('%Y-%m-%d %H:%M'))
-        else:
-            enrollment_values.append('')
-
-        task = enrollment.tasks.filter(slug='qualtrics-initial').exclude(completed=None).first()
-
-        if task is not None:
-            enrollment_values.append(task.completed.astimezone(here_tz).strftime('%Y-%m-%d %H:%M'))
-        else:
-            enrollment_values.append('')
-
-        task = enrollment.tasks.filter(slug='upload-amazon-start').exclude(completed=None).first()
-
-        if task is not None:
-            enrollment_values.append(task.completed.astimezone(here_tz).strftime('%Y-%m-%d %H:%M'))
-
-            metadata = {}
-
-            if task.metadata is not None and task.metadata != '':
-                metadata = json.loads(task.metadata)
-
-            item_count = metadata.get('item_count', '')
-
-            enrollment_values.append(str(item_count))
-        else:
-            enrollment_values.append('')
-            enrollment_values.append('')
-
-        task = enrollment.tasks.filter(slug='upload-amazon-final').exclude(completed=None).first()
-
-        if task is not None:
-            enrollment_values.append(task.completed.astimezone(here_tz).strftime('%Y-%m-%d %H:%M'))
-
-            metadata = {}
-
-            if task.metadata is not None and task.metadata != '':
-                metadata = json.loads(task.metadata)
-
-            item_count = metadata.get('item_count', '')
-
-            enrollment_values.append(str(item_count))
-
-        else:
-            enrollment_values.append('')
-            enrollment_values.append('')
-
-        task = enrollment.tasks.filter(slug='qualtrics-final').exclude(completed=None).first()
-
-        if task is not None:
-            enrollment_values.append(task.completed.astimezone(here_tz).strftime('%Y-%m-%d %H:%M'))
-        else:
-            enrollment_values.append('')
-
-        task = enrollment.tasks.filter(slug='wishlist-initial').exclude(completed=None).first()
-
-        if task is not None:
-            enrollment_values.append(task.completed.astimezone(here_tz).strftime('%Y-%m-%d %H:%M'))
-        else:
-            enrollment_values.append('')
-
-        task = enrollment.tasks.filter(slug='wishlist-task').exclude(completed=None).first()
-
-        if task is not None:
-            enrollment_values.append(task.completed.astimezone(here_tz).strftime('%Y-%m-%d %H:%M'))
-        else:
-            enrollment_values.append('')
-
-        task = enrollment.tasks.filter(slug='wishlist-final').exclude(completed=None).first()
-
-        if task is not None:
-            enrollment_values.append(task.completed.astimezone(here_tz).strftime('%Y-%m-%d %H:%M'))
-        else:
-            enrollment_values.append('')
-
-        # enrollment_values.append('-')
-
-        writer.writerow(enrollment_values)
-
-    response = HttpResponse(output.getvalue(), content_type='text/csv', status=200)
-    response['Content-Disposition'] = 'attachment; filename= "webmunk-enrollments.txt"'
-
-    return response
+    raise Http404

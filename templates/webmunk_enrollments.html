@@ -103,10 +103,10 @@
 								<td></td>
 							{% endif %}
 							<td>{{ enrollment.last_uninstalled|localtime|date:'Y-m-d H:i' }}</td>
-							<td>{{ enrollment|fetch_completed_task:'qualtrics-initial' }}</td>
-							<td>{{ enrollment|fetch_completed_task:'upload-amazon-start' }}</td>
-							<td>{{ enrollment|fetch_completed_task:'upload-amazon-final' }}</td>
-							<td>{{ enrollment|fetch_completed_task:'qualtrics-final' }}</td>
+							<td>{{ enrollment|fetch_completed_task:'qualtrics-initial' }}{{ enrollment|fetch_completed_task:'main-survey-initial' }}</td>
+							<td>{{ enrollment|fetch_completed_task:'upload-amazon-start' }}{{ enrollment|fetch_completed_task:'amazon-fetch-initial' }}</td>
+							<td>{{ enrollment|fetch_completed_task:'upload-amazon-final' }}{{ enrollment|fetch_completed_task:'amazon-fetch-final' }}</td>
+							<td>{{ enrollment|fetch_completed_task:'qualtrics-final' }}{{ enrollment|fetch_completed_task:'main-survey-final' }}</td>
 							<td>{{ enrollment|fetch_completed_task:'wishlist-initial' }}</td>
 							<td>{{ enrollment|fetch_completed_task:'wishlist-task' }}</td>
 							<td>{{ enrollment|fetch_completed_task:'wishlist-final' }}</td>

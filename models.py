@@ -15,6 +15,7 @@ from six import python_2_unicode_compatible
 
 from django.conf import settings
 from django.contrib.gis.db import models
+from django.db import IntegrityError
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.utils import timezone
@@ -260,6 +261,13 @@ class ScheduledTask(models.Model):
             pass
 
         return False
+
+@receiver(pre_save, sender=ScheduledTask)
+def throw_error_if_duplicate(sender, instance, **kwargs): # pylint: disable=unused-argument
+    enrollment = Enrollment.objects.get(id=instance.enrollment.id)
+
+    if instance.id is None and enrollment.tasks.filter(slug=instance.slug):
+        raise IntegrityError('ScheduledTask with slug "%s" already exists for Enrollment "%s".' % (instance.slug, instance.enrollment))
 
 @python_2_unicode_compatible
 class PageContent(models.Model):

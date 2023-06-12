@@ -46,6 +46,30 @@ class Command(BaseCommand):
 
         parameters['data_types'] = [
             'enrollment.qualtrics_responses',
+            'enrollment.scheduled_tasks',
+        ]
+
+        parameters['start_time'] = yesterday.isoformat()
+        parameters['end_time'] = yesterday.isoformat()
+        parameters['custom_parameters'] = {
+            'path': yesterday.isoformat()
+        }
+
+        # ReportJobBatchRequest.objects.create(requester=requester, requested=now, parameters=json.dumps(parameters, indent=2))
+
+        requester = get_user_model().objects.get(username='s3-enrollments')
+
+        active_users = []
+
+        for source in Enrollment.objects.all().order_by('assigned_identifier'):
+            if (source.assigned_identifier in active_users) is False:
+                active_users.append(source.assigned_identifier)
+
+        parameters = {}
+        parameters['data_sources'] = active_users
+
+        parameters['data_types'] = [
+            'enrollment.enrollments',
         ]
 
         parameters['start_time'] = yesterday.isoformat()
