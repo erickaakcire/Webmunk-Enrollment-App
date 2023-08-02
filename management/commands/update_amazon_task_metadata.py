@@ -37,9 +37,6 @@ class Command(BaseCommand):
 
                     amazon_orders = []
 
-                    if task.completed is not None:
-                        before_date = task.completed
-
                     if task.slug == 'upload-amazon-start':
                         amazon_orders = query.filter(generator_identifier='webmunk-amazon-order', source=task.enrollment.assigned_identifier, created__lte=task.enrollment.enrolled)
                     else:
