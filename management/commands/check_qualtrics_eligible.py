@@ -85,21 +85,21 @@ class Command(BaseCommand):
                                             response_file = json.load(export_file)
 
                                             for survey_response in response_file.get('responses', []): # pylint: disable=too-many-nested-blocks
-                                                if survey_response.get('values', {}).get('finished', 0) == 1:
-                                                    email_address = survey_response.get('values', {}).get('QID26_TEXT', None)
+                                                # if survey_response.get('values', {}).get('finished', 0) == 1:
+                                                email_address = survey_response.get('values', {}).get('QID26_TEXT', None)
 
-                                                    if email_address is not None:
-                                                        for enrollment in Enrollment.objects.all():
-                                                            if enrollment.current_raw_identifier().lower() == email_address.lower():
-                                                                # print('FOUND %s -- %s...' % (email_address, enrollment.assigned_identifier))
-                                                                metadata = enrollment.fetch_metadata()
+                                                if email_address is not None:
+                                                    for enrollment in Enrollment.objects.all():
+                                                        if enrollment.current_raw_identifier().lower() == email_address.lower():
+                                                            # print('FOUND %s -- %s...' % (email_address, enrollment.assigned_identifier))
+                                                            metadata = enrollment.fetch_metadata()
 
-                                                                is_eligible = metadata.get('is_eligible', False)
+                                                            is_eligible = metadata.get('is_eligible', False)
 
-                                                                if is_eligible is False:
-                                                                    metadata['is_eligible'] = timezone.now().isoformat()
+                                                            if is_eligible is False:
+                                                                metadata['is_eligible'] = timezone.now().isoformat()
 
-                                                                    enrollment.metadata = json.dumps(metadata, indent=2)
-                                                                    enrollment.save()
+                                                                enrollment.metadata = json.dumps(metadata, indent=2)
+                                                                enrollment.save()
 
-                                                                    print('NOW ELIGIBLE %s...' % email_address)
+                                                                print('NOW ELIGIBLE %s...' % email_address)

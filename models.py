@@ -104,9 +104,9 @@ class ArchivedExtensionRuleSet(models.Model):
 
 @receiver(pre_save, sender=ExtensionRuleSet)
 def archive_rule_set(sender, instance, **kwargs): # pylint: disable=unused-argument
-    original_version = ExtensionRuleSet.objects.get(id=instance.id)
+    original_version = ExtensionRuleSet.objects.filter(id=instance.id).first()
 
-    if original_version.rule_json != instance.rule_json:
+    if original_version is not None and original_version.rule_json != instance.rule_json:
         ArchivedExtensionRuleSet.objects.create(rule_set=instance, rule_json=original_version.rule_json, active_until=timezone.now())
 
 @python_2_unicode_compatible
@@ -320,3 +320,41 @@ class RuleMatchCount(models.Model):
             elif self.content is not None:
                 self.page_content = PageContent.objects.create(url=self.url, retrieved=check_date, content=self.content)
                 self.save()
+
+
+@python_2_unicode_compatible
+class AmazonPurchase(models.Model):
+    participant = models.ForeignKey(Enrollment, null=True, blank=True, related_name='purchases', on_delete=models.SET_NULL)
+
+    wishlist_url = models.URLField(null=True, blank=True, max_length=4096)
+
+    item_type = models.CharField(max_length=4096, null=True, blank=True)
+
+    item_name = models.CharField(max_length=4096, null=True, blank=True)
+    item_url = models.CharField(max_length=4096, null=True, blank=True)
+
+@python_2_unicode_compatible
+class AmazonReward(models.Model):
+    participant = models.ForeignKey(Enrollment, null=True, blank=True, related_name='rewards', on_delete=models.SET_NULL)
+
+    wishlist_url = models.URLField(null=True, blank=True)
+
+    item_type = models.CharField(max_length=4096, null=True, blank=True)
+
+    item_name = models.CharField(max_length=4096, null=True, blank=True)
+    item_url = models.CharField(max_length=4096, null=True, blank=True)
+    item_price = models.FloatField(null=True, blank=True)
+
+    notes = models.TextField(max_length=(1024 * 1024), null=True, blank=True)
+
+    def __str__(self):
+        return '%s (%s)' % (self.item_name, self.participant)
+
+    def fetch_asin(self):
+        tokens = self.item_url.replace('?', '/').replace('#', '/').split('/')
+
+        for i in range(0, len(tokens)): # pylint: disable=consider-using-enumerate
+            if tokens[i] == 'dp':
+                return tokens[i + 1]
+
+        return None

@@ -53,6 +53,8 @@
 				</button>
 				<div class="collapse navbar-collapse" id="navbarCollapse"></div>
 				<ul class="nav navbar-nav navbar-right">
+					<li><a href="#" id="action_upload_purchases">Upload Rewards</a></li>
+					<li class="ps-3 pe-3 text-light">&bull;</li>
 					<li><a href="{% url 'simple_data_export_form' %}">Export Data Files</a></li>
 					<li class="ps-3 pe-3 text-light">&bull;</li>
 					<li><a href="{% url 'enrollments_txt' %}">Download CSV</a></li>
@@ -74,8 +76,10 @@
 						<th scope="col" data-sortable="true">Latest Data Point</th>
 						<th scope="col" data-sortable="true">Uninstalled</th>
 						<th scope="col" data-sortable="true">Intake Survey</th>
-						<th scope="col" data-sortable="true">Upload</th>
-						<th scope="col" data-sortable="true">Upload</th>
+						<th scope="col" data-sortable="true">Initial Upload</th>
+						<th scope="col" data-sortable="true">Final Upload</th>
+						<th scope="col" data-sortable="true">2022 Order Count</th>
+						<th scope="col" data-sortable="true">2023 Order Count</th>
 						<th scope="col" data-sortable="true">Final Survey</th>
 						<th scope="col" data-sortable="true">Wishlist Install</th>
 						<th scope="col" data-sortable="true">Wishlist Instructions</th>
@@ -88,12 +92,12 @@
 							<th scope="row">{{ enrollment.assigned_identifier }}</th>
 							<td>{{ enrollment.group }}</td>
 							<td>{{ enrollment.current_raw_identifier }}</td>
-							<td>{{ enrollment.rule_set }}</td>
-							<td>{{ enrollment.enrolled|localtime|date:'Y-m-d H:i' }}</td>
-							<td>{{ enrollment|fetch_metadata:'amazon_start' }}</td>
-							<td>{{ enrollment.last_fetched|localtime|date:'Y-m-d H:i' }}</td>
+							<td style="white-space: nowrap;">{{ enrollment.rule_set }}</td>
+							<td style="white-space: nowrap;">{{ enrollment.enrolled|localtime|date:'Y-m-d H:i' }}</td>
+							<td style="white-space: nowrap;">{{ enrollment|fetch_metadata:'amazon_start' }}</td>
+							<td style="white-space: nowrap;">{{ enrollment.last_fetched|localtime|date:'Y-m-d H:i' }}</td>
 							{% if enrollment.latest_data_point %}
-								<td>
+								<td style="white-space: nowrap;">
 									{{ enrollment.latest_data_point|localtime|date:'Y-m-d H:i' }}
 									{% if enrollment.latest_data_point %}
 										<br />({{ enrollment.latest_server }})
@@ -102,18 +106,25 @@
 							{% else %}
 								<td></td>
 							{% endif %}
-							<td>{{ enrollment.last_uninstalled|localtime|date:'Y-m-d H:i' }}</td>
-							<td>{{ enrollment|fetch_completed_task:'qualtrics-initial' }}{{ enrollment|fetch_completed_task:'main-survey-initial' }}</td>
-							<td>{{ enrollment|fetch_completed_task:'upload-amazon-start' }}{{ enrollment|fetch_completed_task:'amazon-fetch-initial' }}</td>
-							<td>{{ enrollment|fetch_completed_task:'upload-amazon-final' }}{{ enrollment|fetch_completed_task:'amazon-fetch-final' }}</td>
-							<td>{{ enrollment|fetch_completed_task:'qualtrics-final' }}{{ enrollment|fetch_completed_task:'main-survey-final' }}</td>
-							<td>{{ enrollment|fetch_completed_task:'wishlist-initial' }}</td>
-							<td>{{ enrollment|fetch_completed_task:'wishlist-task' }}</td>
-							<td>{{ enrollment|fetch_completed_task:'wishlist-final' }}</td>
+							<td style="white-space: nowrap;">{{ enrollment.last_uninstalled|localtime|date:'Y-m-d H:i' }}</td>
+							<td style="white-space: nowrap;">{{ enrollment|fetch_completed_task:'qualtrics-initial' }}{{ enrollment|fetch_completed_task:'main-survey-initial' }}</td>
+							<td style="white-space: nowrap;">{{ enrollment|fetch_completed_task:'upload-amazon-start' }}{{ enrollment|fetch_completed_task:'amazon-fetch-initial' }}</td>
+							<td style="white-space: nowrap;">{{ enrollment|fetch_completed_task:'upload-amazon-final' }}{{ enrollment|fetch_completed_task:'amazon-fetch-final' }}</td>
+							<td style="white-space: nowrap;">{{ enrollment|fetch_metadata:'year-2022_order_count' }}</td>
+							<td style="white-space: nowrap;">{{ enrollment|fetch_metadata:'year-2023_order_count' }}</td>
+							<td style="white-space: nowrap;">{{ enrollment|fetch_completed_task:'qualtrics-final' }}{{ enrollment|fetch_completed_task:'main-survey-final' }}</td>
+							<td style="white-space: nowrap;">{{ enrollment|fetch_completed_task:'wishlist-initial' }}</td>
+							<td style="white-space: nowrap;">{{ enrollment|fetch_completed_task:'wishlist-task' }}</td>
+							<td style="white-space: nowrap;">{{ enrollment|fetch_completed_task:'wishlist-final' }}</td>
 						</tr>
 					{% endfor %}
 				</tbody>
 			</table>
+
+			<form action="{% url 'enrollment_upload_rewards' %}" id="upload_purchases" method="POST" enctype="multipart/form-data">
+				{% csrf_token %}
+				<input type="file" name="file_upload" id="purchases_csv" style="display: none;" "accept=".csv" />
+			</form>
 		</main>
 		<script src="{% static 'enrollment/vendor/js/jquery-3.6.0.min.js' %}" crossorigin="anonymous"></script>
 		<script src="{% static 'enrollment/vendor/js/bootstrap.bundle.min.js' %}" crossorigin="anonymous"></script>
@@ -192,8 +203,53 @@
 				$('#enrollment_table').on('search.bs.table', function (e, number, size) {
 					window.setTimeout(attachListeners, 500)
 				})
-			})
+				
+				$('#action_upload_purchases').click(function(eventObj) {
+					eventObj.preventDefault()
 
+					$('input#purchases_csv').trigger('click')
+  				})
+
+				$('input#purchases_csv').change(function () {
+					$('form#upload_purchases').submit()
+				})
+
+				$('form#upload_purchases').submit(function () {
+					const data = new FormData()
+
+					const formData = $(this).serializeArray()
+
+					$.each(formData, function (key, input) {
+					  data.append(input.name, input.value)
+					})
+
+					const fileData = $('input#purchases_csv')[0].files
+
+					for (let i = 0; i < fileData.length; i++) {
+					  data.append('purchase_upload', fileData[i])
+					}
+
+					if (confirm('Upload rewards?')) {
+					  $.ajax({
+						url: $(this).attr('action'),
+						method: 'post',
+						processData: false,
+						contentType: false,
+						enctype: 'multipart/form-data',
+						data: data,
+						success: function (data) {
+						  alert(data.message)
+						},
+						error: function (e) {
+						  console.log(e)
+						  alert('An error was encountered uploading: Server Error ' + e.status)
+						}
+					  })
+					}
+	
+					return false
+				})
+			})
 		</script>
 		<script src="{% static 'enrollment/vendor/js/bootstrap-table.js' %}" crossorigin="anonymous"></script>
 	</body>

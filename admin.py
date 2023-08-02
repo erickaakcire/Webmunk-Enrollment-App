@@ -6,7 +6,7 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils import timezone
 
-from .models import Enrollment, EnrollmentGroup, ExtensionRuleSet, ScheduledTask, RuleMatchCount, PageContent, ArchivedExtensionRuleSet
+from .models import Enrollment, EnrollmentGroup, ExtensionRuleSet, ScheduledTask, RuleMatchCount, PageContent, ArchivedExtensionRuleSet, AmazonPurchase, AmazonReward
 
 class DropdownRelatedFilter(RelatedFieldListFilter):
     template = 'admin/enrollment_task_enrollment_dropdown_filter.html'
@@ -105,3 +105,17 @@ class PageContentAdmin(admin.OSMGeoAdmin):
         return mark_safe('<br />'.join(links)) # nosec
 
     rule_match_links.short_description = 'Rule matches'
+
+@admin.register(AmazonPurchase)
+class AmazonPurchaseAdmin(admin.OSMGeoAdmin):
+    list_display = ('participant', 'item_type', 'item_name',)
+    list_filter = ('item_type', 'participant')
+
+    search_fields = ('participant', 'item_type', 'item_name', 'item_url',)
+
+@admin.register(AmazonReward)
+class AmazonRewardAdmin(admin.OSMGeoAdmin):
+    list_display = ('participant', 'item_type', 'item_name', 'item_price',)
+    list_filter = ('item_type', 'participant')
+
+    search_fields = ('participant', 'item_type', 'item_name', 'item_url',)

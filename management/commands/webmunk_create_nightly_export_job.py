@@ -46,7 +46,6 @@ class Command(BaseCommand):
 
         parameters['data_types'] = [
             'enrollment.qualtrics_responses',
-            'enrollment.scheduled_tasks',
         ]
 
         parameters['start_time'] = yesterday.isoformat()
@@ -55,7 +54,7 @@ class Command(BaseCommand):
             'path': yesterday.isoformat()
         }
 
-        # ReportJobBatchRequest.objects.create(requester=requester, requested=now, parameters=json.dumps(parameters, indent=2))
+        ReportJobBatchRequest.objects.create(requester=requester, requested=now, parameters=json.dumps(parameters, indent=2))
 
         requester = get_user_model().objects.get(username='s3-enrollments')
 
@@ -70,6 +69,7 @@ class Command(BaseCommand):
 
         parameters['data_types'] = [
             'enrollment.enrollments',
+            'enrollment.scheduled_tasks',
         ]
 
         parameters['start_time'] = yesterday.isoformat()
