@@ -125,6 +125,6 @@ class Command(BaseCommand):
                                                                     else:
                                                                         task_name = 'Qualtrics (%s)' % survey_id[1]
 
-                                                                        ScheduledTask.objects.create(enrollment=enrollment, slug=survey_id[1], task=task_name, completed=completed_date, active=now, last_check=now)
+                                                                        ScheduledTask.objects.create(enrollment=enrollment, slug='qualtric-created-%s' % survey_id[1], task=task_name, completed=completed_date, active=now, last_check=now)
                 else:
                     print('START NON-200 HTTP CODE: %d -- %s: %s' % (response.status_code, start_url, response.text))

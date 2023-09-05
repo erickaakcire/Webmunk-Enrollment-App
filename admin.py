@@ -108,10 +108,10 @@ class PageContentAdmin(admin.OSMGeoAdmin):
 
 @admin.register(AmazonPurchase)
 class AmazonPurchaseAdmin(admin.OSMGeoAdmin):
-    list_display = ('participant', 'item_type', 'item_name',)
-    list_filter = ('item_type', 'participant')
+    list_display = ('enrollment', 'purchase_date', 'item_name', 'item_type',)
+    list_filter = ('item_type', 'purchase_date', 'enrollment',)
 
-    search_fields = ('participant', 'item_type', 'item_name', 'item_url',)
+    search_fields = ('item_type', 'item_name', 'item_url',)
 
 @admin.register(AmazonReward)
 class AmazonRewardAdmin(admin.OSMGeoAdmin):

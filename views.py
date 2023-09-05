@@ -237,18 +237,18 @@ def enrollment_upload_rewards(request): # pylint: disable=unused-argument, too-m
         input_file.seek(0)
 
         with io.TextIOWrapper(input_file, encoding=result['encoding']) as text_file:
-            csv_in = csv.reader(text_file)
+            csv_in = csv.DictReader(text_file)
 
-            for row in list(csv_in)[1:]:
-                identifier = row[1]
-                wishlist_url = row[5]
+            for row in csv_in:
+                identifier = row['webmunk_id']
+                wishlist_url = row['webmunk_id']
+                item_url = row['url_purchased']
+                item_name = row['product_title_purchased']
 
-                item_price = row[26]
-                item_name = row[25]
-                item_url = row[24]
-                item_type = row[23]
+                item_price = row.get('price_item_purchased', '')
+                item_type = row.get('item_purchased', None)
 
-                notes = row[29]
+                notes = row.get('study_notes', None)
 
                 if item_name.strip() != '':
                     enrollment = Enrollment.objects.filter(assigned_identifier=identifier).first()
@@ -296,5 +296,97 @@ def enrollments_rewards_json(request): # pylint: disable=unused-argument, too-ma
             payload['asin_product%d' % reward_index] = reward.fetch_asin()
 
             payload['short_name_product%d' % reward_index] = ' '.join(reward.item_name.split()[:4])
+
+    return HttpResponse(json.dumps(payload, indent=2), content_type='application/json', status=200)
+
+
+def enrollments_purchases_json(request): # pylint: disable=unused-argument, too-many-branches, too-many-statements
+    payload = {}
+
+    identifier = request.GET.get('webmunk_id', '')
+
+    enrollment = Enrollment.objects.filter(assigned_identifier=identifier).first()
+
+    if enrollment is not None:
+        reward_index = 1
+
+        start = enrollment.enrolled.date()
+        end = start + datetime.timedelta(days=(7 * 7))
+
+        # query = enrollment.purchases.filter(purchase_date__gte=start, purchase_date__lte=end).exclude(item_type=None).exclude(item_type='null').exclude(item_type='not-found').exclude(item_type='invalid')
+        query = enrollment.purchases.filter(purchase_date__gte=start, purchase_date__lte=end)
+
+        ignore_categories = (
+            'vibrator',
+            'bedroom',
+            'condom',
+            'male_toys',
+            'lubricant',
+            'anal',
+            'butt',
+            'plug',
+            'dildo',
+            'massager',
+            'incontinence protector',
+            'medication',
+            'abis book',
+            'abis book',
+            'gift card',
+            'downloadable video game',
+            'electronic gift card',
+            'abis gift card',
+            'financial instruments, products, contracts and agreements',
+            'books >',
+            'movies & tv  >',
+        )
+
+        for category in ignore_categories:
+            query = query.exclude(item_type__icontains=category)
+
+        ignore_titles = (
+            'coffin',
+            'casket',
+            'vibrator',
+            'bedroom',
+            'condom',
+            'male toys',
+            'lubricant',
+            'anal',
+            'butt',
+            'plug',
+            'dildo',
+            'massager',
+            'incontinence protector',
+            'medication',
+            'abis book',
+            'gift card',
+            ' sex ',
+            'fuck',
+        )
+
+        for keyword in ignore_titles:
+            query = query.exclude(item_name__icontains=keyword)
+
+        seen = []
+
+        reward_index = 1
+
+        for purchase in query.order_by('?'):
+            if reward_index == 4:
+                break
+
+            if (purchase.item_url in seen) is False:
+                payload['full_name_product%d' % reward_index] = purchase.item_name
+
+                payload['asin_product%d' % reward_index] = purchase.asin()
+
+                payload['short_name_product%d' % reward_index] = ' '.join(purchase.item_name.split()[:4])
+
+                payload['purchase_date%d' % reward_index] = purchase.purchase_date.isoformat()
+                payload['item_type%d' % reward_index] = purchase.item_type
+
+                reward_index += 1
+
+                seen.append(purchase.item_url)
 
     return HttpResponse(json.dumps(payload, indent=2), content_type='application/json', status=200)

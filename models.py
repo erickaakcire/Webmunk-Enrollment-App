@@ -324,14 +324,25 @@ class RuleMatchCount(models.Model):
 
 @python_2_unicode_compatible
 class AmazonPurchase(models.Model):
-    participant = models.ForeignKey(Enrollment, null=True, blank=True, related_name='purchases', on_delete=models.SET_NULL)
+    enrollment = models.ForeignKey(Enrollment, null=True, blank=True, related_name='purchases', on_delete=models.SET_NULL)
 
-    wishlist_url = models.URLField(null=True, blank=True, max_length=4096)
+    order_url = models.URLField(null=True, blank=True, max_length=4096)
 
     item_type = models.CharField(max_length=4096, null=True, blank=True)
 
     item_name = models.CharField(max_length=4096, null=True, blank=True)
     item_url = models.CharField(max_length=4096, null=True, blank=True)
+
+    purchase_date = models.DateField()
+
+    def asin(self):
+        tokens = self.item_url.split('/')
+
+        for i in range(0, len(tokens)): # pylint: disable=consider-using-enumerate
+            if tokens[i] == 'product':
+                return tokens[i+1]
+
+        return ''
 
 @python_2_unicode_compatible
 class AmazonReward(models.Model):
