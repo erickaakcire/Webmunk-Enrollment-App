@@ -1,21 +1,19 @@
 # Webmunk Enrollment Django App
 
-This repository contains the enrollment app intended to be installed into a larger Django project for the purposes of administering Webmunk projects. Unlike the [*data collection server*](https://github.com/Webmunk-Project/Webmunk-Django), this **does not** store data gathered by the browser extension in the field, **but** it does configure the extension and assign anonymized study identfiers to participants.
+This repository contains the enrollment app intended to be installed into a larger Django project to administer Webmunk projects. Unlike the [*data collection server*](https://github.com/Webmunk-Project/Webmunk-Django), this **does not** store data gathered by the browser extension in the field, **but** it does configure the extension and assign anonymized study identifiers to participants.
 
 
 ## Prerequisites
 
-The Webmunk Enrollment App has been developed primarily on Unix-like platforms and generally assumes the existence of tools such as CRON and Apache.
+A Unix-like server with root/sudo access
+* CRON is used to kick-off [the Quicksilver job scheduler](https://github.com/audacious-software/Quicksilver-Django)
+* Python 3.6+
+* Postgres 9.5+ with the [PostGIS extension](https://docs.djangoproject.com/en/3.2/ref/contrib/gis/install/) Note that on some platforms (Red Hat Enterprise Linux, for one), the PostGIS packages may not be readily available. In that case, refer to [the PostGIS documentation for guidance](https://postgis.net/documentation/getting_started/) for your particular environment.
+* Apache2 webserver with [mod_wsgi](https://modwsgi.readthedocs.io/)
 
 Administrators seeking to install this app should be comfortable with [the Django web application framework](https://www.djangoproject.com/). This app uses Django-specific features extensively and intentionally, and not just as a database front-end.
 
-This app targets LTS releases of Django (3.2.X, 4.2.X). It requires Python 3.6 and newer.
-
-In addition to Django, the enrollment app relies extensively on the Postgres database support included with Django, including the PostGIS extensions needed to enable spatial data types within Postgres. PDK supports Postgres 9.5 and newer.
-
-To make your server accessible to outside web browser extension clients, we typically configure Django with the Apache 2 webserver, using [mod_wsgi](https://modwsgi.readthedocs.io/) to facilitate communication between the front-end Apache web server and the Python application server. Typically, the bundled Apache server and mod_wsgi module that comes with your Unix distribution is more than sufficient to support Django.
-
-This server assumes that local users are able to set up and run CRON jobs. This server uses CRON to kick-off [the Quicksilver job scheduler](https://github.com/audacious-software/Quicksilver-Django), which runs background tasks for the server.
+Typically, the bundled Apache server and mod_wsgi module that comes with your Unix distribution is more than sufficient to support Django.
 
 
 ## Installation
@@ -24,19 +22,41 @@ If you are operating in an environment that fulfills all of the requirements abo
 
 1. **(Strongly Recommended)** Before installing Django, [create a Python virtual environment](https://docs.python.org/3/library/venv.html) that will contain Django and all of the relevant dependencies separate from your host platform's own Python installation. Don't forget to activate your virtual environment before continuing!
 
-2. Follow the instructions provided by the Django project to [install Django and its dependencies](https://docs.djangoproject.com/en/3.2/topics/install/). Remember to specify a Django LTS version, and not necessarily install the newest by default: `pip install Django==3.2.24`, **not** `pip install Django`.
+2. Follow the instructions provided by the Django project to [install Django and its dependencies](https://www.djangoproject.com/download/#supported-versions). Remember to specify a Django LTS version (3.2.X, 4.2.X), and do not install the newest by default: `pip install Django==4.2`, **not** `pip install Django`.
 
-3. After the base Django platform has been installed, enable GeoDjango and PostGIS by [following the instructions provided](https://docs.djangoproject.com/en/3.2/ref/contrib/gis/install/). Note that one some platforms (Red Hat Enterprise Linux, for one), the PostGIS packages may not be readily available. In that case, refer to [the PostGIS documentation for guidance](https://postgis.net/documentation/getting_started/) for your particular environment.
+3. After the base Django platform has been installed, enable GeoDjango.
+4. Create a suitable Postgres database as the local `postgres` (or equivalent) user:
 
-4. Once Django is fully installed, create a new Django project: `django-admin startproject myproject`. [Refer to the Django tutorial](https://docs.djangoproject.com/en/3.2/intro/tutorial01/) to understand how everything fits together.
+    ```
+    $ sudo su - postgres
+    $ psql
+    postgres=# CREATE USER webmunk WITH PASSWORD 'XXX' LOGIN;
+    postgres=# CREATE DATABASE webmunk_enroll WITH OWNER webmunk;
+    postgres=# exit
+    ```
 
-5. Within your project, add the Quicksilver job scheduler by checking it out from Git: `git clone https://github.com/audacious-software/Quicksilver-Django.git quicksilver` (if you are not using Git to track changes yet) or `git submodule add hhttps://github.com/audacious-software/Quicksilver-Django.git quicksilver` (if you would like Quicksilver added as a submodule dependency).
+    (Replace `XXX` with a strong password.)
 
-6. Within your project, add the [Simple Backup app](https://github.com/audacious-software/Simple-Backup-Django/) by checking it out from Git: `git clone https://github.com/audacious-software/Simple-Backup-Django.git simple_backup` (if you are not using Git to track changes yet) or `git submodule add https://github.com/audacious-software/Simple-Backup-Django.git simple_backup` (if you would like Simple Backup added as a submodule dependency).
+    After the database has been created, enable the PostGIS extension:
 
-7. Within your project, add the [Simple Data Export app](https://github.com/audacious-software/Simple-Data-Export-Django) by checking it out from Git: `git clone https://github.com/audacious-software/Simple-Data-Export-Django.git simple_data_export` (if you are not using Git to track changes yet) or `git submodule add https://github.com/audacious-software/Simple-Data-Export-Django.git simple_data_export` (if you would like Simple Backup added as a submodule dependency).
+    ```
+    $ psql webmunk_enroll
+    postgres=# CREATE EXTENSION postgis;
+    postgres=# exit
+    ```
 
-8. Copy the `documentation/requirements.txt` file to the root of the project: 
+    After the PostGIS extension has been enabled, you may log out as the local `postgres` user.
+
+
+5. Once Django is fully installed, create a new Django project: `django-admin startproject myproject`. [Refer to the Django tutorial](https://docs.djangoproject.com/en/3.2/intro/tutorial01/) to understand how everything fits together.
+
+6. Within your project, add the Quicksilver job scheduler by checking it out from Git: `git clone https://github.com/audacious-software/Quicksilver-Django.git quicksilver` (if you are not using Git to track changes yet) or `git submodule add hhttps://github.com/audacious-software/Quicksilver-Django.git quicksilver` (if you would like Quicksilver added as a submodule dependency).
+
+7. Within your project, add the [Simple Backup app](https://github.com/audacious-software/Simple-Backup-Django/) by checking it out from Git: `git clone https://github.com/audacious-software/Simple-Backup-Django.git simple_backup` (if you are not using Git to track changes yet) or `git submodule add https://github.com/audacious-software/Simple-Backup-Django.git simple_backup` (if you would like Simple Backup added as a submodule dependency).
+
+8. Within your project, add the [Simple Data Export app](https://github.com/audacious-software/Simple-Data-Export-Django) by checking it out from Git: `git clone https://github.com/audacious-software/Simple-Data-Export-Django.git simple_data_export` (if you are not using Git to track changes yet) or `git submodule add https://github.com/audacious-software/Simple-Data-Export-Django.git simple_data_export` (if you would like Simple Backup added as a submodule dependency).
+
+9. Copy the `documentation/requirements.txt` file to the root of the project: 
 
     ```
     cp enrollment/documentation/requirements.txt requirements.txt
@@ -52,9 +72,9 @@ If you are operating in an environment that fulfills all of the requirements abo
 
     Installing the `wheel` package first allows `pip` to install precompiled Python packages. This can be a significant time saver and may help you avoid the need to install a ton of extra platform dependencies to compile the Python packages.
 
-   In the event that you encounter some version mismatches between app dependencies, this can be resolved by updating the conflicting dependencies with the latest versions available for your Python environment and updating `requirements.txt` files accordingly. Note that the all of these apps use [GitHub's Dependabot service](https://docs.github.com/en/code-security/dependabot) to try and keep all their dependencies as up-to-date as possible, usually on a weekly update schedule.
+   In the event that you encounter some version mismatches between app dependencies, this can be resolved by updating the conflicting dependencies with the latest versions available for your Python environment and updating `requirements.txt` files accordingly. Note that all of these apps use [GitHub's Dependabot service](https://docs.github.com/en/code-security/dependabot) to try and keep all their dependencies as up-to-date as possible, usually on a weekly update schedule.
 
-9. Once the relevant Python dependencies have been installed, enable the enrollment server by adding the following to the `INSTALLED_APPS` option in your settings:
+10. Once the relevant Python dependencies have been installed, enable the enrollment server by adding the following to the `INSTALLED_APPS` option in your settings:
 
     ```
     INSTALLED_APPS = [
@@ -79,11 +99,11 @@ If you are operating in an environment that fulfills all of the requirements abo
 
     The `documentation` folder in this repository contain examples for `settings.py` and `urls.py` for your reference, including various customization and configuration points that you will need to adapt for your own studies.
     
-10. Once the server has been enabled, initialize the database tables by making the local `manage.py` file executable, and running `./manage.py migrate`. You should see Django run through all the Django migrations and create the relevant tables.
+11. Once the server has been enabled, initialize the database tables by making the local `manage.py` file executable, and running `./manage.py migrate`. You should see Django run through all the Django migrations and create the relevant tables.
 
-11. After the database tables have been created, [configure your local Apache HTTP server](https://docs.djangoproject.com/en/3.2/howto/deployment/wsgi/modwsgi/) to connect to Django.
+12. After the database tables have been created, [configure your local Apache HTTP server](https://docs.djangoproject.com/en/3.2/howto/deployment/wsgi/modwsgi/) to connect to Django.
 
-    We **strongly recommend** that your configure Django to be served over HTTPS ([obtain a Let's Encrypt certificate if needed](https://letsencrypt.org/)) and to forward any unencrypted HTTP requests to the HTTPS port using a `VirtualHost` definition like:
+    You must configure Django to be served over HTTPS ([obtain a Let's Encrypt certificate if needed](https://letsencrypt.org/)) and to forward any unencrypted HTTP requests to the HTTPS port using a `VirtualHost` definition like:
 
     ````
     <VirtualHost *:80>
@@ -94,7 +114,7 @@ If you are operating in an environment that fulfills all of the requirements abo
     </VirtualHost>
     ````
 
-12. Once Apache is configured and running, create a Django superuser account (if you have not already): `./manage.py createsuperuser`. The command will prompt you for a username, password, and e-mail address. Once you have provided those, install the static file resources `./manage.py collectstatic`. Finally, log into the Django administrative backend: `https://myserver.example.com/admin/` (replacing `myserver.example.com` with your own host's name. You should see the standard Django tables.
+13. Once Apache is configured and running, create a Django superuser account (if you have not already): `./manage.py createsuperuser`. The command will prompt you for a username, password, and e-mail address. Once you have provided those, install the static file resources `./manage.py collectstatic`. Finally, log into the Django administrative backend: `https://myserver.example.com/admin/` (replacing `myserver.example.com` with your own host's name. You should see the standard Django tables.
     
 Congratulations, you have (almost) successfully installed the Webmunk Enrollment Server.
 
